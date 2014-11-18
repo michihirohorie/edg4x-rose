@@ -38,6 +38,18 @@ using namespace Rose::Frontend::X10::X10c;
 #define OUTPUT_DEBUGGING_FUNCTION_NAME 0
 #define OUTPUT_HIDDEN_LIST_DATA 0
 
+void
+Unparse_X10::unparseStatementNumbers ( SgStatement* stmt, SgUnparse_Info & info )
+   {
+  // This is the base class (which is called only for C/C++ code generation).
+
+  // This is a Fortran specific case (different from use of SgLabelStatement in C/C++).
+  // This is a virtual function and defined in the base class as just a test on the
+  // value range of the in the numeric_label (default value is -1).
+  // ROSE_ASSERT(stmt->get_numeric_label() == -1);
+//     ROSE_ASSERT(stmt->get_numeric_label() == NULL);
+   }
+
 
 Unparse_X10::Unparse_X10(Unparser* unp, std::string fname)
    : UnparseLanguageIndependentConstructs(unp,fname)
@@ -67,11 +79,12 @@ cout.flush();
         return;
     }
 
+// MH-20141113
 // TODO: Remove this !
-/*
 cout << "*** @ unparseX10File " << sourcefile -> getFileName()
 << endl;
 cout.flush();
+/*
 */
 
     SgJavaPackageStatement *package_statement = sourcefile -> get_package();
@@ -130,12 +143,13 @@ cout.flush();
         for (int i = 0; i < type_list.size(); i++) {
             SgClassDeclaration *type_declaration = type_list[i];
 // TODO: Remove this !
-/*
+// MH-20141009
 cout << "*** @ type " << i << ": " << type_declaration -> get_qualified_name().str() << endl;
 cout.flush();
 AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) type_declaration -> getAttribute("sourcefile");
 ROSE_ASSERT(isSgSourceFile(attribute -> getNode()));
 ROSE_ASSERT(attribute -> getNode() == sourcefile);
+/*
 */
 
             unparseStatement(type_declaration, info);
@@ -190,7 +204,7 @@ cout.flush();
 
      curprint_indented("", info);
 // Remove this! MH-20140908
-//      cout << "V=" << stmt->variantT() << endl;
+//     cout << "3 type=" << stmt->variantT() << endl;
      switch (stmt->variantT())
         {
        // DQ (3/14/2011): Need to move the X10 specific unparse member functions from the base class to this function.
@@ -239,6 +253,7 @@ cout.flush();
           case V_SgContinueStmt:           unparseContinueStmt(stmt, info);     break;
 
        // case V_SgAsmStmt:                unparseAsmStmt(stmt, info);          break;
+          case V_SgAtomicStmt:             unparseAtomicStmt((SgAtomicStmt *)stmt, info);       break;
 #if 0
                         case V_SgFinishStmt:           unparseFinishStmt((SgFinishStmt *)stmt, info);           break;
                         case V_SgAtStmt:               unparseAtStmt((SgAtStmt *)stmt, info);           break;
@@ -282,21 +297,24 @@ cout.flush();
                                 if (stmt->sage_class_name() == "SgFinishStmt") {
 //                                      cout << "SgFinishStmt found" << endl;
                                         SgFinishStmt *finish = (SgFinishStmt *) stmt;
+                                    if (finish->get_isClocked())
+                                        curprint_indented("clocked ", info);
                                 curprint_indented("finish ", info);
                                 unparseStatement(finish->get_body(), info);
                                 }
                                 else if (stmt->sage_class_name() == "SgAsyncStmt") {
                                         SgAsyncStmt *async = (SgAsyncStmt *) stmt;
+                                    if (async->get_isClocked())
+                                        curprint_indented("clocked ", info);
                                 curprint_indented("async ", info);
                                 unparseStatement(async->get_body(), info);
                                 }
                                 else if (stmt->sage_class_name() == "SgAtStmt") {
-                                        cout << "SgAtStmt found" << endl;
-                                        SgAtStmt *at = (SgAtStmt *) stmt;
-                                curprint_indented("at (", info);
-                                unparseExpression(at->get_expression(), info);
-                                curprint_indented(") ", info);
-                                unparseStatement(at->get_body(), info);
+                                    SgAtStmt *at = (SgAtStmt *) stmt;
+                                	curprint_indented("at (", info);
+                                	unparseExpression(at->get_expression(), info);
+                                	curprint_indented(") ", info);
+                                	unparseStatement(at->get_body(), info);
                                 }
                                 // MH-20140716 comment out until unparseFinishStmt etc. is implemented
 //               ROSE_ASSERT(false);
@@ -651,6 +669,31 @@ Unparse_X10::unparseTemplateInstantiationMemberFunctionDeclStmt (SgStatement* st
 #endif
    }
 
+void
+Unparse_X10::unparseBasicBlockStmtWithoutBrace(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgBasicBlock* basic_stmt = isSgBasicBlock(stmt);
+     ROSE_ASSERT(basic_stmt != NULL);
+
+     unp -> cur.insert_newline();
+//     bool includeExp = false;
+     foreach (SgStatement* stmt, basic_stmt->get_statements()) {
+#if 0
+         if (stmt->variantT() == V_SgSuperExp) {
+             curprint("super(");
+             includeExp = true;
+             continue;
+         } 
+#endif
+         unparseNestedStatement(stmt, info);
+         unp->cur.insert_newline();
+     }
+#if 0
+     if (includeExp) {
+         curprint_indented(");", info);
+     }
+#endif
+   }
 
 void
 Unparse_X10::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
@@ -660,10 +703,23 @@ Unparse_X10::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      curprint ("{");
      unp->cur.insert_newline();
+//     bool includeExp = false;
      foreach (SgStatement* stmt, basic_stmt->get_statements()) {
+#if 0
+         if (stmt->variantT() == V_SgSuperExp) {
+             curprint("super(");
+             includeExp = true;
+             continue;
+         } 
+#endif
          unparseNestedStatement(stmt, info);
          unp->cur.insert_newline();
      }
+#if 0
+     if (includeExp) {
+         curprint_indented(");", info);
+     }
+#endif
      curprint_indented ("}", info);
    }
 
@@ -762,11 +818,11 @@ void Unparse_X10::unparseThrowStmt(SgStatement* stmt, SgUnparse_Info& info) {
 void Unparse_X10::unparseForEachStmt(SgStatement* stmt, SgUnparse_Info& info) {
     SgJavaForEachStatement *foreach_stmt = isSgJavaForEachStatement(stmt);
     ROSE_ASSERT(foreach_stmt != NULL);
-
     curprint("for (");
 
     ROSE_ASSERT(foreach_stmt -> get_element()->get_variables().size() == 1);
-    curprint (foreach_stmt->get_element()-> get_variables()[0]->get_name().str());
+//    unparseVarDeclStmt(foreach_stmt -> get_element(), info);
+	curprint (foreach_stmt->get_element()-> get_variables()[0]->get_name().str());
 
     curprint(" in ");
     unparseExpression(foreach_stmt -> get_collection(), info);
@@ -787,9 +843,16 @@ Unparse_X10::unparseInitializedName(SgInitializedName* init_name, SgUnparse_Info
         init_name = isSgInitializedName(alias_attribute -> getNode());
     }
 
+#if 0
+    // This is handled by caller functions
     if (init_name -> attributeExists("final")) {
-        curprint("final ");
+        curprint("val ");
     }
+#endif
+/* MH-20141030 : memo
+    if (!exit) 
+       curprint("var");
+*/
 
 // TODO: Remove this !!!
 /*
@@ -895,6 +958,9 @@ Unparse_X10::unparseForInitStmt (SgStatement* stmt, SgUnparse_Info& info) {
                 SgVariableDeclaration *vardecl_stmt = (SgVariableDeclaration *) *stmt_it;
                 foreach (SgInitializedName* init_name, vardecl_stmt->get_variables()) {
                     unparseName(init_name->get_name(), info);
+                    // MH-20141030
+                    curprint(" : ");
+                    unparseType(init_name->get_type(), info);
 
                     if (init_name->get_initializer() != NULL) {
                         curprint(" = ");
@@ -1035,6 +1101,13 @@ Unparse_X10::trimGlobalScopeQualifier ( string qualifiedName )
      return qualifiedName;
    }
 
+void
+Unparse_X10::unparseAtomicStmt(SgAtomicStmt* stmt, SgUnparse_Info& info) {
+    curprint("atomic {");
+    unparseStatement(stmt->get_body(), info);
+    curprint("}");
+}       
+
 #if 0
 void
 //Unparse_X10::unparseFinishStmt(SgStatement* stmt, SgUnparse_Info& info) {
@@ -1062,33 +1135,40 @@ Unparse_X10::unparseAsyncStmt(SgAsyncStmt* stmt, SgUnparse_Info& info) {
 
 void
 Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
-   {
-     SgMemberFunctionDeclaration* mfuncdecl_stmt = isSgMemberFunctionDeclaration(stmt);
-     ROSE_ASSERT(mfuncdecl_stmt != NULL);
-     if (mfuncdecl_stmt -> attributeExists("compiler-generated")) { // Do not unparse compiler-generated functions
-         return;
-     }
+{
+    SgMemberFunctionDeclaration* mfuncdecl_stmt = isSgMemberFunctionDeclaration(stmt);
+    ROSE_ASSERT(mfuncdecl_stmt != NULL);
+    if (mfuncdecl_stmt -> attributeExists("compiler-generated")) { // Do not unparse compiler-generated functions
+        return;
+    }
 
-        // MH (7/7/2014) : Remove this
-//      cout << "NAME=" << mfuncdecl_stmt->get_name() << ", CLASS_NAME=" << mfuncdecl_stmt->get_associatedClassDeclaration()->get_qualified_name() 
-//                              << ", MANGLED=" << mfuncdecl_stmt->get_associatedClassDeclaration()->get_mangled_name() << endl;
-        // MH (7/7/2014) : Added 
-        string str = mfuncdecl_stmt->get_associatedClassDeclaration()->get_qualified_name().getString();
-        string shorten = str.substr(2);
-        str = shorten + "$$this$" + shorten;
-        replaceString(str, "::", "$");
-        int isUnparse = 1;
-        if (mfuncdecl_stmt->get_name().getString() ==  str) {
-//              cout << mfuncdecl_stmt->get_name().getString() << " equals " << str << endl;
-                curprint("\n// Comment out. Dees not support the constrainted type so far. \n");
-                curprint("/*\n");
-                isUnparse = 0;  
-        }
+    // MH (7/7/2014) : Added 
+    string str = mfuncdecl_stmt->get_associatedClassDeclaration()->get_qualified_name().getString();
+    string shorten = str.substr(2);
+    // MH-20141018
+//    str = shorten + "$$this$" + shorten;
+    str = shorten + "$$this$";
+    replaceString(str, "::", "$");
+    int isUnparse = 1;
+    string name = mfuncdecl_stmt->get_name().getString();
+/*
+    cout << "NAME=" << mfuncdecl_stmt->get_name() 
+         << ", str=" << str
+         << ", comp=" << name.compare(0, str.length(), str)
+         << ", CLASS_NAME=" << mfuncdecl_stmt->get_associatedClassDeclaration()->get_qualified_name() 
+         << ", MANGLED=" << mfuncdecl_stmt->get_associatedClassDeclaration()->get_mangled_name() << endl;
+*/
+//    if (mfuncdecl_stmt->get_name().getString() ==  str) {
+    if (name.compare(0, str.length(), str) == 0) {
+        curprint("\n// Comment out. Dees not support the constrainted type. \n");
+        curprint("/*\n");
+        isUnparse = 0;  
+    }
 
-        int isConstructor = 0;
-        // if constructor
-        if (mfuncdecl_stmt->get_name() == mfuncdecl_stmt->get_associatedClassDeclaration()->get_name()) 
-                isConstructor = 1;
+    int isConstructor = 0;
+    // if constructor
+    if (mfuncdecl_stmt->get_name() == mfuncdecl_stmt->get_associatedClassDeclaration()->get_name()) 
+        isConstructor = 1;
 
     AstSgNodeListAttribute *annotations_attribute = (AstSgNodeListAttribute *) mfuncdecl_stmt -> getAttribute("annotations");
     if (annotations_attribute) {
@@ -1136,7 +1216,7 @@ Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
          unparseTypeParameters(type_list, info);
      }
 
-                curprint("def");
+     curprint("def");
 
 #if 0
      //
@@ -1154,26 +1234,22 @@ Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 */
          AstRegExAttribute *attribute = (AstRegExAttribute *) mfuncdecl_stmt -> getAttribute("type");
          if (attribute) {
-curprint("<<");
              curprint(attribute -> expression);
-curprint(">>");
          }
          else {
-curprint("<");
              unparseType(mfuncdecl_stmt -> get_type() -> get_return_type(), info);
-curprint(">");
          }
          curprint(" ");
          unparseName(mfuncdecl_stmt->get_name(), info);
      }
 #endif
 
-         curprint(" ");
-                if (isConstructor)
-                unparseName("this", info);
-                else    
-                unparseName(mfuncdecl_stmt->get_name(), info);
-                curprint("(");
+        curprint(" ");
+        if (isConstructor)
+	   	    unparseName("this", info);
+        else 
+            unparseName(mfuncdecl_stmt->get_name(), info);
+        curprint("(");
 
 
 #if 0 /* There's no need to call unparseStatement() to unparse the parameter list because that's done in the next
@@ -1197,6 +1273,10 @@ curprint(">");
              }
          }
                 
+         // MH-20141030 : handles argument modifier before calling unparseInitializedName
+         if (! (*name_it) -> attributeExists("final")) {
+            curprint("var ");
+         }
          unparseInitializedName(*name_it, info);
      }
 
@@ -1222,16 +1302,27 @@ curprint(">");
 */
          AstRegExAttribute *attribute = (AstRegExAttribute *) mfuncdecl_stmt -> getAttribute("type");
          if (attribute) {
-                        if (attribute -> expression != "void") {
-                        curprint(": ");
-                curprint(attribute -> expression);
-                        } 
+             if (attribute -> expression != "void") {
+                 curprint(": ");
+			 	 string exp = attribute->expression;
+            	 if (exp.length() > 2 && exp.at(0) == ':' && exp.at(1) == ':') {
+                     exp = exp.substr(2);
+                     replaceString(exp, "::", ".");
+                 }
+                 curprint(exp);
+             } 
          }
          else {
-                        if (mfuncdecl_stmt -> get_type() -> get_return_type() -> get_mangled().getString() != "void") {
-                        curprint(": ");
-                unparseType(mfuncdecl_stmt -> get_type() -> get_return_type(), info);
-                        }
+              if (mfuncdecl_stmt -> get_type() -> get_return_type() -> get_mangled().getString() != "void") {
+                  curprint(": ");
+                  string exp = mfuncdecl_stmt -> get_type() -> get_return_type()-> get_mangled().getString() ;
+            	  if (exp.length() > 2 && exp.at(0) == ':' && exp.at(1) == ':') {
+                      exp = exp.substr(2);
+                      replaceString(exp, "::", ".");
+                  }
+//                  unparseType(mfuncdecl_stmt -> get_type() -> get_return_type(), info);
+                    curprint(exp);
+              }
          }
          curprint(" ");
      }
@@ -1271,14 +1362,29 @@ curprint(">");
 //             curprint(attribute -> expression);
                         if (attribute -> expression != "void") {
                         curprint(": ");
-                curprint(attribute -> expression);
+//                curprint(attribute -> expression);
+			 	 string exp = attribute->expression;
+            	 if (exp.length() > 2 && exp.at(0) == ':' && exp.at(1) == ':') {
+                     exp = exp.substr(2);
+                     replaceString(exp, "::", ".");
+                 }
+                 curprint(exp);
+   
                         } 
          }
          else {
 //             unparseType(mfuncdecl_stmt -> get_type() -> get_return_type(), info);
                         if (mfuncdecl_stmt -> get_type() -> get_return_type() -> get_mangled().getString() != "void") {
                         curprint(": ");
-                unparseType(mfuncdecl_stmt -> get_type() -> get_return_type(), info);
+//                unparseType(mfuncdecl_stmt -> get_type() -> get_return_type(), info);
+                 string exp = mfuncdecl_stmt -> get_type() -> get_return_type()-> get_mangled().getString() ;
+            	  if (exp.length() > 2 && exp.at(0) == ':' && exp.at(1) == ':') {
+                      exp = exp.substr(2);
+                      replaceString(exp, "::", ".");
+                  }
+//                  unparseType(mfuncdecl_stmt -> get_type() -> get_return_type(), info);
+                    curprint(exp);
+ 
                         }
          }
          curprint(" ");
@@ -1293,7 +1399,37 @@ curprint(">");
 //     unparseStatement(function_definition, info);
 //     unparseFuncDefnStmt(function_definition, info);
 //
-         unparseBasicBlockStmt(function_definition -> get_body(), info);
+
+        // MH-20141108
+        // If a constructor exists and property is declared on its class, 
+        // "property" invocation is not parsed on parser phase. Therefore,
+        // adding "property" invocation on unparser phase is needed.
+        // The reason to skip parsing "property" invocation is that
+        // the definition of "property"  does not exist at any X10 source
+        // because it is automatically generated by x10 compiler intermediately.
+        bool existArg = false;
+        if (isConstructor) {
+            SgInitializedNamePtrList& names = mfuncdecl_stmt->get_args();
+            SgInitializedNamePtrList::iterator name_it;
+            for (name_it = names.begin(); name_it != names.end(); name_it++) {
+                if (name_it == names.begin()) {
+                    curprint(" {\n");
+                    curprint("        property(");
+                    existArg = true;
+                }
+                if (name_it != names.begin()) {
+                    curprint(", ");
+                }
+                unparseName((*name_it) -> get_name(), info);
+            }
+            if (existArg) {
+                curprint(");\n");
+                unparseBasicBlockStmtWithoutBrace(function_definition -> get_body(), info);
+                curprint_indented ("}", info);
+            }
+        }       
+        if (!existArg)
+            unparseBasicBlockStmt(function_definition -> get_body(), info);
      }
         
         if (!isUnparse)
@@ -1322,12 +1458,12 @@ Unparse_X10::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info) {
     }
 //    unparseDeclarationModifier(vardecl_stmt->get_declarationModifier(), info);
         SgDeclarationModifier& mod = vardecl_stmt->get_declarationModifier();
+    unparseStorageModifier(mod.get_storageModifier(), info);
+    unparseAccessModifier(mod.get_accessModifier(), info);
     if (mod.isJavaAbstract()) curprint("abstract ");
     if (mod.isFinal()) curprint("val ");
     else curprint("var ");
-    unparseAccessModifier(mod.get_accessModifier(), info);
     unparseTypeModifier(mod.get_typeModifier(), info);
-    unparseStorageModifier(mod.get_storageModifier(), info);
     foreach (SgInitializedName* init_name, vardecl_stmt->get_variables())
         unparseInitializedName(init_name, info);
 }
@@ -1398,22 +1534,22 @@ cout << "Processing class declaration " << classdecl_stmt -> get_qualified_name(
 cout.flush();
 
 #ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
-        bool shouldPrint = false;
+    bool shouldPrint = false;
     for (list<string>::iterator i = Rose::Frontend::X10::X10c::classNames.begin(); i != Rose::Frontend::X10::X10c::classNames.end(); i++) {
         string class_name = *i; //StringUtility::getAbsolutePathFromRelativePath(*i);
-                if (class_name == classdecl_stmt -> get_qualified_name().str()) {
-                        shouldPrint = true;     
-                        break;
-                }
+        if (class_name == classdecl_stmt -> get_qualified_name().str()) {
+            shouldPrint = true;     
+            break;
+        }
     }
-        if (!shouldPrint) 
-                return;
+    if (!shouldPrint) 
+        return;
 #endif
 /* 
 */
 
-     AstSgNodeListAttribute *annotations_attribute = (AstSgNodeListAttribute *) classdecl_stmt -> getAttribute("annotations");
-     if (annotations_attribute) {
+    AstSgNodeListAttribute *annotations_attribute = (AstSgNodeListAttribute *) classdecl_stmt -> getAttribute("annotations");
+    if (annotations_attribute) {
          for (int i = 0; i < annotations_attribute -> size(); i++) {
              SgJavaAnnotation *annotation = isSgJavaAnnotation(annotations_attribute -> getNode(i));
              unparseExpression(annotation, info);
@@ -1432,6 +1568,8 @@ cout.flush();
                                              ? "interface "
                                              : "class ");
 
+// MH-20141014
+cout << "Class decl=" << classdecl_stmt -> get_name().str() << ", " << classdecl_stmt -> get_qualified_name().str() << endl;
      unparseName(classdecl_stmt -> get_name(), info);
 
      if (classdecl_stmt -> attributeExists("type_parameters")) {
@@ -1443,6 +1581,36 @@ cout.flush();
 
      SgClassDefinition *class_def = classdecl_stmt -> get_definition();
      ROSE_ASSERT(class_def != NULL);
+
+     // MH-20141109
+     // MH-20141106
+#if 1
+     if (class_def -> attributeExists("properties")) {
+         AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) class_def -> getAttribute("properties");
+         SgClassPropertyList *initialized_list = isSgClassPropertyList(attribute->getNode());
+         ROSE_ASSERT(initialized_list);
+
+         SgInitializedNamePtrList& names = initialized_list->get_args();
+         SgInitializedNamePtrList::iterator name_it;
+         curprint("(");
+         for (name_it = names.begin(); name_it != names.end(); name_it++) {
+             SgInitializedName *iname = *name_it;
+             if (name_it != names.begin())
+                 curprint(", ");
+             AstRegExAttribute *attribute = (AstRegExAttribute *) iname -> getAttribute("type");
+
+             unparseName(iname->get_name(), info);
+             curprint(" : ");
+
+             if (attribute) 
+                 curprint(attribute -> expression);
+             else 
+                 unparseType(iname -> get_type(), info);
+         }
+         curprint(") ");
+     }
+#endif
+
 
      SgBaseClassPtrList& bases = class_def -> get_inheritances();
 
@@ -1516,7 +1684,13 @@ cout.flush();
 
          ROSE_ASSERT(class_def -> attributeExists("extension_type_names"));
          AstRegExAttribute *extension_attribute = (AstRegExAttribute *) class_def -> getAttribute("extension_type_names");
-         curprint(extension_attribute -> expression);
+         // MH-20141014
+         // Note that expression includes the term "extends"
+         string exp = extension_attribute -> expression;
+         replaceString(exp, " ::", " ");
+         replaceString(exp, "::", ".");
+         curprint(exp);
+//         curprint(extension_attribute -> expression);
      }
 
      if (classdecl_stmt -> get_explicit_enum()) { // An enumeration?
@@ -1533,13 +1707,14 @@ Unparse_X10::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgClassDefinition* classdefn_stmt = isSgClassDefinition(stmt);
      ROSE_ASSERT(classdefn_stmt != NULL);
 // TODO: Remove this!
-/*
+// MH-20141014 : Comment out
 cout << "*** Class " << classdefn_stmt -> get_declaration() -> get_qualified_name().str() << " contains " << classdefn_stmt -> get_members().size() << " statements" << endl;
 for (int i = 0; i < classdefn_stmt -> get_members().size(); i++) {
   SgNode *statement = classdefn_stmt -> get_members()[i];
   cout << "    " << statement -> class_name() << endl;
 }
 cout.flush();
+/*
 */
      curprint(" {");
      unp -> cur.insert_newline();

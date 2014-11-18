@@ -32,6 +32,8 @@ std::string markAndGetQualifiedTypeName(SgClassType *class_type);
 bool hasConflicts(SgClassDeclaration *class_declaration);
 
 void replaceString (std::string&, const std::string&, const std::string&);
+extern void printStack();
+extern void printCompStack(int num);
 
 std::string getPrimitiveTypeName(SgType *);
 std::string getWildcardTypeName(SgJavaWildcardType *);
@@ -67,7 +69,7 @@ class ComponentStack : private std::list<SgNode *> {
 public:
     void push(SgNode *n) {
         if (SgProject::get_verbose() > 0) {
-            std::cerr << "***Pushing node " << n -> class_name() << std::endl; 
+            std::cerr << "***ComponentStack: Pushing node " << n -> class_name() << ", " << n << std::endl; 
             std::cerr.flush();
         }
         push_front(n);
@@ -77,7 +79,7 @@ public:
         ROSE_ASSERT(size() > 0);
         SgNode *n = front();
         if (SgProject::get_verbose() > 0) {
-            std::cerr << "***Popping node " << n -> class_name() << std::endl;
+            std::cerr << "***ComponentStack: Popping node " << n -> class_name() << ", " << n << std::endl;
             std::cerr.flush();
         }
         pop_front();

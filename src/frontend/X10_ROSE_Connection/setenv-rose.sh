@@ -36,9 +36,9 @@ _X10_DIST="$HOME/x10/x10-$_X10_VER/x10.dist"
 # NOTE: keep the followings consistent
 #
 _JDK_VER=1.7.0
-_JDK_DIR=jdk1.7.0_67
-_JDK_TAR=jdk-7u67-linux-x64.tar.gz
-_JDK_URL=http://download.oracle.com/otn-pub/java/jdk/7u67-b01/$_JDK_TAR
+_JDK_DIR=jdk1.7.0_71
+_JDK_TAR=jdk-7u71-linux-x64.tar.gz
+_JDK_URL=http://download.oracle.com/otn-pub/java/jdk/7u71-b14/$_JDK_TAR
 
 function check_jdk() {
   [[ ("$1" =~ "HotSpot") && ("$1" =~ "64-Bit Server VM") && ("$1" =~ "$_JDK_VER") ]] && return 0

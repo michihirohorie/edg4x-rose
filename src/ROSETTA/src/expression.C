@@ -303,7 +303,7 @@ Grammar::setUpExpressions ()
           BitXorOp       | BitAndOp         | BitOrOp             | CommaOpExp       | LshiftOp             | RshiftOp       |
           PntrArrRefExp  | ScopeOp          | AssignOp            | ExponentiationOp | JavaUnsignedRshiftOp |
           ConcatenationOp | PointerAssignOp | UserDefinedBinaryOp | CompoundAssignOp | MembershipOp         |
-          NonMembershipOp | IsOp            | IsNotOp          /* | DotDotExp*/,
+          NonMembershipOp | IsOp            | IsNotOp             | DotDotExp,
           "BinaryOp","BINARY_EXPRESSION", false);
 
      NEW_NONTERMINAL_MACRO (NaryOp,
@@ -353,7 +353,8 @@ Grammar::setUpExpressions ()
           Comprehension       | ListComprehension       | SetComprehension         | DictionaryComprehension      | NaryOp |
           StringConversion    | YieldExpression         | TemplateFunctionRefExp   | TemplateMemberFunctionRefExp | AlignOfOp |
           TypeTraitBuiltinOperator | CompoundLiteralExp | JavaAnnotation           | JavaTypeExpression           | TypeExpression | 
-          ClassExp | FunctionParameterRefExp            | HereExp, "Expression", "ExpressionTag", false);
+          ClassExp | FunctionParameterRefExp            | HereExp                  | AtExp                        | FinishExp,
+          "Expression", "ExpressionTag", false);
 
   // ***********************************************************************
   // ***********************************************************************

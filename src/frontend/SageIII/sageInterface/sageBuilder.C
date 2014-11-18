@@ -1687,6 +1687,33 @@ SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_t
      return type_decl;
    }
 
+// MH-20141106
+SgClassPropertyList * 
+SageBuilder::buildClassPropertyList(SgInitializedName* in1, SgInitializedName* in2, SgInitializedName* in3, SgInitializedName* in4, SgInitializedName* in5, SgInitializedName* in6, SgInitializedName* in7, SgInitializedName* in8, SgInitializedName* in9, SgInitializedName* in10)
+{
+  SgClassPropertyList *parameterList = new SgClassPropertyList();
+  ROSE_ASSERT (parameterList);
+
+  parameterList->set_definingDeclaration (NULL);
+  parameterList->set_firstNondefiningDeclaration (parameterList);
+
+  setOneSourcePositionForTransformation(parameterList);
+
+  if (in1) appendPropertyArg(parameterList, in1);
+  if (in2) appendPropertyArg(parameterList, in2);
+  if (in3) appendPropertyArg(parameterList, in3);
+  if (in4) appendPropertyArg(parameterList, in4);
+  if (in5) appendPropertyArg(parameterList, in5);
+  if (in6) appendPropertyArg(parameterList, in6);
+  if (in7) appendPropertyArg(parameterList, in7);
+  if (in8) appendPropertyArg(parameterList, in8);
+  if (in9) appendPropertyArg(parameterList, in9);
+  if (in10) appendPropertyArg(parameterList, in10);
+
+  return parameterList;
+}
+
+
 //-----------------------------------------------
 // Assertion `definingDeclaration != NULL || firstNondefiningDeclaration != NULL' 
 SgFunctionParameterList * 
@@ -5990,6 +6017,8 @@ BUILD_BINARY_DEF(XorAssignOp)
 BUILD_BINARY_DEF(VarArgCopyOp)
 BUILD_BINARY_DEF(VarArgStartOp)
 
+BUILD_BINARY_DEF(DotDotExp)
+
 #undef BUILD_BINARY_DEF
 
 
@@ -8423,10 +8452,10 @@ SgExecStatement* SageBuilder::buildExecStatement_nfi(SgExpression* executable,
 }
 
 // MH (6/10/2014): Added async support
-SgAsyncStmt* SageBuilder::buildAsyncStmt(SgBasicBlock *body)
+SgAsyncStmt* SageBuilder::buildAsyncStmt(SgBasicBlock *body, bool isClocked)
 {
        ROSE_ASSERT(body != NULL);
-       SgAsyncStmt *async_stmt = new SgAsyncStmt(body);
+       SgAsyncStmt *async_stmt = new SgAsyncStmt(body, isClocked);
        ROSE_ASSERT(async_stmt);
        body->set_parent(async_stmt);
        setOneSourcePositionForTransformation(async_stmt);
@@ -8435,15 +8464,28 @@ SgAsyncStmt* SageBuilder::buildAsyncStmt(SgBasicBlock *body)
 }
 
 // MH (6/11/2014): Added finish support
-SgFinishStmt* SageBuilder::buildFinishStmt(SgBasicBlock *body)
+// MH (11/7/2014): Added clock support with finish
+SgFinishStmt* SageBuilder::buildFinishStmt(SgBasicBlock *body, bool isClocked)
 {
        ROSE_ASSERT(body != NULL);
-       SgFinishStmt *finish_stmt = new SgFinishStmt(body);
+       SgFinishStmt *finish_stmt = new SgFinishStmt(body, isClocked);
        ROSE_ASSERT(finish_stmt);
        body->set_parent(finish_stmt);
        setOneSourcePositionForTransformation(finish_stmt);
 
        return finish_stmt;
+}
+
+// MH (11/12/2014): Added atomic support 
+SgAtomicStmt* SageBuilder::buildAtomicStmt(SgBasicBlock *body)
+{
+       ROSE_ASSERT(body != NULL);
+       SgAtomicStmt *atomic_stmt = new SgAtomicStmt(body);
+       ROSE_ASSERT(atomic_stmt);
+       body->set_parent(atomic_stmt);
+       setOneSourcePositionForTransformation(atomic_stmt);
+
+       return atomic_stmt;
 }
 
 // MH (6/11/2014): Added at support
@@ -8459,12 +8501,44 @@ SgAtStmt* SageBuilder::buildAtStmt(SgExpression *expression, SgBasicBlock *body)
        return at_stmt;
 }
 
+// MH (9/14/2014): Added atexpr support
+SgAtExp* SageBuilder::buildAtExp(SgExpression *expression, SgBasicBlock *body)
+{
+       ROSE_ASSERT(expression);
+       ROSE_ASSERT(body);
+       SgAtExp *at_exp = new SgAtExp(expression, body);
+       SageInterface::setSourcePosition(at_exp);
+       expression->set_parent(at_exp);
+       body->set_parent(at_exp);
+
+       return at_exp;
+}
+
+// MH (11/7/2014): Added finish expression support
+SgFinishExp* SageBuilder::buildFinishExp(SgExpression *expression, SgBasicBlock *body)
+{
+       ROSE_ASSERT(expression);
+       ROSE_ASSERT(body);
+       SgFinishExp *finish_exp = new SgFinishExp(expression, body);
+       SageInterface::setSourcePosition(finish_exp);
+       expression->set_parent(finish_exp);
+       body->set_parent(finish_exp);
+
+       return finish_exp;
+}
+
 SgHereExp* SageBuilder::buildHereExpression()
 {
        SgHereExp *here = new SgHereExp(NULL);
        return here;
 }
 
+
+SgDotDotExp* SageBuilder::buildDotDotExp()
+{
+       SgDotDotExp *dotdot = new SgDotDotExp(NULL);
+       return dotdot;
+}
 
 //! Build a try statement
 SgTryStmt* SageBuilder::buildTryStmt(SgStatement* body,

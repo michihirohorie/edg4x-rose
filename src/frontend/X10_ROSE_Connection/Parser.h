@@ -3,6 +3,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+void printStack();
+
 /*
  * Method:    cactionInsertImportedPackageOnDemand
  * Signature: (Ljava/lang/String;LX10Token;)V

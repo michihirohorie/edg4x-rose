@@ -1279,6 +1279,14 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBuildClassSupportStart
 
 /*
  * Class:     x10rose_visit_JNI
+ * Method:    cactionPushNestedClass
+ * Signature: (Ljava/lang/String;Ljava/lang/String;)V
+ */
+JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionPushNestedClass
+  (JNIEnv *, jclass, jstring, jstring);
+
+/*
+ * Class:     x10rose_visit_JNI
  * Method:    cactionUpdateClassSupportStart
  * Signature: (Ljava/lang/String;LX10Token;)V
  */
@@ -1471,6 +1479,14 @@ JNIEXPORT jstring JNICALL Java_x10rose_visit_JNI_cactionGetCurrentClassName
 
 /*
  * Class:     x10rose_visit_JNI
+ * Method:    cactionSetCurrentClassNameWithCopyingStacks
+ * Signature: (Ljava/lang/String;)V
+ */
+JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionSetCurrentClassNameWithCopyingStacks
+        (JNIEnv *, jclass, jstring);
+
+/*
+ * Class:     x10rose_visit_JNI
  * Method:    cactionSetCurrentClassName
  * Signature: (Ljava/lang/String;)V
  */
@@ -1499,7 +1515,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAsync
  * Signature: (LX10Token;)V
  */
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAsyncEnd
-        (JNIEnv *, jclass, jobject);
+        (JNIEnv *, jclass, jboolean, jobject);
 
 /*
  * Class:     x10rose_visit_JNI
@@ -1515,7 +1531,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionFinish
  * Signature: (LX10Token;)V
  */
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionFinishEnd
-        (JNIEnv *, jclass, jobject);
+        (JNIEnv *, jclass, jboolean, jobject);
 
 /*
  * Class:     x10rose_visit_JNI
@@ -1533,6 +1549,39 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAt
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAtEnd
         (JNIEnv *, jclass, jobject);
 
+
+/*
+ * Class:     x10rose_visit_JNI
+ * Method:    cactionAt
+ * Signature: (LX10Token;)V
+ */
+JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAtExpr
+        (JNIEnv *, jclass, jobject);
+
+/*
+ * Class:     x10rose_visit_JNI
+ * Method:    cactionAtEnd
+ * Signature: (LX10Token;)V
+ */
+JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAtExprEnd
+        (JNIEnv *, jclass, jobject);
+
+/*
+ * Class:     x10rose_visit_JNI
+ * Method:    cactionFinishExpr
+ * Signature: (LX10Token;)V
+ */
+JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionFinishExpr
+        (JNIEnv *, jclass, jobject);
+
+/*
+ * Class:     x10rose_visit_JNI
+ * Method:    cactionFinishExprEnd
+ * Signature: (LX10Token;)V
+ */
+JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionFinishExprEnd
+        (JNIEnv *, jclass, jobject);
+
 /*
  * Class:     x10rose_visit_JNI
  * Method:    cactionHere
@@ -1540,6 +1589,39 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAtEnd
  */
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionHere
         (JNIEnv *, jclass, jobject);
+
+/*
+ * Class:     x10rose_visit_JNI
+ * Method:    cactioAppendProperty
+ * Signature: (Ljava/lang/String;LX10Token;)V
+ */
+JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAppendProperty
+        (JNIEnv *, jclass, jstring, jboolean, jboolean, jobject);
+
+/*
+ * Class:     x10rose_visit_JNI
+ * Method:    cactioSetProperties
+ * Signature: (Ljava/lang/String;LX10Token;)V
+ */
+JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionSetProperties 
+        (JNIEnv *, jclass, jint, jobject);
+
+/*
+ * Class:     x10rose_visit_JNI
+ * Method:    cactionAtomic
+ * Signature: (LX10Token;)V
+ */
+JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAtomic
+        (JNIEnv *, jclass, jobject);
+
+/*
+ * Class:     x10rose_visit_JNI
+ * Method:    cactionAtomicEnd
+ * Signature: (LX10Token;)V
+ */
+JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAtomicEnd
+        (JNIEnv *, jclass, jobject);
+
 }
 #ifdef __cplusplus
 #endif

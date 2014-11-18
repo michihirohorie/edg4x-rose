@@ -1659,6 +1659,10 @@ std::pair<SgVariableDeclaration*, SgExpression* > createTempVariableForExpressio
     
 std::pair<SgVariableDeclaration*, SgExpression*> createTempVariableAndReferenceForExpression
     (SgExpression* expression, SgScopeStatement* scope);
+
+// MH-20141106
+ROSE_DLL_API SgVariableSymbol* appendPropertyArg(SgClassPropertyList *, SgInitializedName*);
+ROSE_DLL_API SgVariableSymbol* prependPropertyArg(SgClassPropertyList *, SgInitializedName*);
     
 //! Append an argument to SgFunctionParameterList, transparently set parent,scope, and symbols for arguments when possible
 /*! We recommend to build SgFunctionParameterList before building a function declaration

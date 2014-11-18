@@ -4809,6 +4809,28 @@ bool SgDotExp::isChildUsedAsLValue(const SgExpression* child) const
         return true;
 }
 
+// MH-20140917
+/* ? */
+bool SgDotDotExp::isLValue() const
+{
+        // TODO: king84
+        // if rhs is a non-static member function, the result is not an lvalue (static member functions are lvalues)
+        // see std:5.2.5 par:4
+        // if rhs is an enum value, then the result is not an lvalue
+        // see std:5.2.5 par:4
+        return true;
+}
+
+bool SgDotDotExp::isChildUsedAsLValue(const SgExpression* child) const
+{
+        if (!isChild(const_cast<SgExpression*>(child)))
+        {
+                ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgDotExp");
+                return false;
+        }
+        return true;
+}
+
 /*! std:5.4 par:6 */
 bool SgDotStarOp::isLValue() const
 {

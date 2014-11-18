@@ -37,6 +37,25 @@ void replaceString (std::string& str, const std::string& from, const std::string
     }
 }
 
+/**
+ * For debugging use
+ */
+void printStack() {
+    cout << "...in the stack: " << endl;
+    for (std::list<SgScopeStatement*>::iterator i = astX10ScopeStack.begin(); i != astX10ScopeStack.end(); i++) {
+        cout << "    "
+             << (isSgClassDefinition(*i) ?
+                 isSgClassDefinition(*i) -> get_qualified_name().getString() :
+                     isSgFunctionDefinition(*i) ?
+                         (isSgFunctionDefinition(*i) -> get_declaration() -> get_name().getString() + "(...)") :
+//                       (*i) -> class_name()) << " (" << ((unsigned long) (*i)) << ")"
+                         (*i) -> class_name()) << " (" << hex << ((unsigned long) (*i)) << ")"
+             << endl;
+        cout.flush();
+    }
+}
+
+
 /*
  * Wrapper to create an Sg_File_Info from line/col info
  */
@@ -170,15 +189,20 @@ void setX10SourcePosition(SgLocatedNode*locatedNode, Token_t *token) {
 SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClassDefinition *class_definition, const SgName &function_name, list<SgType *>& types) {
     int num_arguments = types.size();
     SgMemberFunctionDeclaration *method_declaration = NULL;
-cout << "class_definition in lookupMemberFunctionDeclarationInClassScope=" << class_definition << endl;
     vector<SgDeclarationStatement *> declarations = class_definition -> get_members();
+    cout << "class_definition=" << class_definition << endl;
+    cout << "size=" << declarations.size() << endl;
     for (int i = 0; i < declarations.size(); i++, method_declaration = NULL) {
         SgDeclarationStatement *declaration = declarations[i];
+        cout << "i=" << i << ", decl=" << declaration << endl;
         method_declaration = isSgMemberFunctionDeclaration(declaration);
         if (method_declaration && method_declaration -> get_name().getString().compare(function_name) == 0) {
             vector<SgInitializedName *> args = method_declaration -> get_args();
             if (args.size() == num_arguments) {
 #if 1
+                // MH-20140918
+                // Currently, we do not check argument types precisely.
+                // Instead, we cannot run optimization such as inlining because we cannot specify exact a mathed method.
                 break;
 #else
                 list<SgType *>::const_iterator j = types.begin();
@@ -233,6 +257,11 @@ cout << ") in class "
 << endl;
 cout.flush();
 }
+
+	// MH-20140914  method_declaration can be null because dist array can be regarded as method name
+	if (!method_declaration) 
+		return NULL;
+	
     ROSE_ASSERT(method_declaration != NULL);
 
     return method_declaration;
@@ -1953,7 +1982,9 @@ SgMemberFunctionSymbol *findFunctionSymbolInClass(SgClassDefinition *class_defin
     SgMemberFunctionDeclaration *method_declaration = findMemberFunctionDeclarationInClass(class_definition, function_name, formal_types);
     if (method_declaration == NULL) {
 #if 1
-        method_declaration = lookupMemberFunctionDeclarationInClassScope(ObjectClassDefinition, function_name, formal_types);
+		// MH-20140914 In X10, currently top level class is not set
+		if (ObjectClassDefinition) 
+        	method_declaration = lookupMemberFunctionDeclarationInClassScope(ObjectClassDefinition, function_name, formal_types);
 #else
                 string member_name = "";
                 string class_name = class_definition->get_qualified_name();
@@ -2021,6 +2052,10 @@ cout << ") in class "
 << endl;
 cout.flush();
 }
+
+	// MH-20140914  method_declaration can be null because dist array can be regarded as method name
+	if (!method_declaration) 
+		return NULL;
 
     ROSE_ASSERT(method_declaration);
     SgSymbol *symbol =  method_declaration -> search_for_symbol_from_symbol_table();
@@ -2558,76 +2593,125 @@ SgClassSymbol *lookupSimpleNameTypeInClass(const SgName &name, SgClassDefinition
     ROSE_ASSERT(class_definition);
     ROSE_ASSERT(class_definition -> get_declaration());
 
-//cout << "lookupSimpleNameTypeInClass 1 " << endl;
-#if 0
     SgClassSymbol *symbol = class_definition -> lookup_class_symbol(name);
-#else
-    SgClassSymbol *symbol = (SgClassSymbol *)globalScope->lookup_symbol(name);
-#endif
-//cout << "lookupSimpleNameTypeInClass 2 " << symbol << endl;
     vector<SgBaseClass *> &inheritances = class_definition -> get_inheritances();
-//cout << "lookupSimpleNameTypeInClass 3 " << endl;
     for (int k = 0; symbol == NULL && k < (int) inheritances.size(); k++) {
         SgClassDeclaration *super_declaration = inheritances[k] -> get_base_class();
         class_definition = super_declaration -> get_definition(); // get the super class definition
         symbol = lookupSimpleNameTypeInClass(name, class_definition);
     }
-//cout << "lookupSimpleNameTypeInClass 4 " << endl;
 
     if (symbol == NULL) {
-//cout << "lookupSimpleNameTypeInClass 5 " << name << endl;
 #if 0
         symbol = ::ObjectClassDefinition -> lookup_class_symbol(name);
-#else
 #endif
-//cout << "lookupSimpleNameTypeInClass 6 " << endl;
     }
-//cout << "lookupSimpleNameTypeInClass 7 " << endl;
 
     return symbol;
 }
 
 
-SgClassSymbol *lookupTypeSymbol(SgName &type_name) {
+SgClassSymbol *lookupTypeSymbol(SgName &type_name, const SgName &package_name = NULL) {
+    if (SgProject::get_verbose() > 2)
+        printf ("Enter lookupTypeSymbol \n");
+
+    cout <<"currentType="<<currentTypeName;
+    printCompStack(53);
+
     SgClassSymbol *class_symbol = NULL;
-//cout << "java_support.C lookupTypeSymbol 1 " << type_name << endl;
+
+    // MH-20141009
+    scopeMap[currentTypeName] = astX10ScopeStack;
+    componentMap[currentTypeName] = astX10ComponentStack;
+	std::string formerTypeName = currentTypeName;
+    currentTypeName = type_name.str();
+    cout << "Former type=" << formerTypeName << ", current type=" << currentTypeName << endl;
+    map<std::string, ScopeStack>::iterator it = scopeMap.find(currentTypeName);
+    if (it != scopeMap.end()) {
+        astX10ScopeStack = it->second;
+        cout << "- FOUND existing scopeMap for " << currentTypeName << endl;
+    }
+    else {
+        cout << "- NOT FOUND existing scopeMap for " << currentTypeName << endl;
+        // If a scope stack does not exist, it means the type name had not been traversed yet.
+// MH-20141030
+//        currentTypeName = formerTypeName;
+// MH-20141024
+//        return NULL;
+    } 
+	map<std::string, ComponentStack>::iterator it2 = componentMap.find(currentTypeName);
+    if (it2 != componentMap.end()) {
+    	astX10ComponentStack = it2->second;
+        cout << "- FOUND existing componentMap for " << currentTypeName << endl;
+    }
+    else {
+        // Here cannot be in...
+        cout << "- NOT FOUND existing componentMap for " << currentTypeName << endl;
+// MH-20141030
+//        currentTypeName = formerTypeName;
+// MH-20141024
+//        return NULL;
+    }
+
+    // MH-20141024
+    list<SgName> qualifiedTypeName = generateQualifierList(type_name);
+    ROSE_ASSERT(qualifiedTypeName.size());
+    list<SgName>::iterator name = qualifiedTypeName.end();
+    --name;
+    type_name = *name;
+
     //
     // Iterate over the scope stack... At each point, look to see if the variable is there.
     // Note that in the case of a class, we recursively search the class as well as its
     // super class and interfaces.
     //
 #if 0 // MH-20140326
-    for (std::list<SgScopeStatement*>::iterator i = astX10ScopeStack.begin(); class_symbol == NULL && i != astX10ScopeStack.end(); i++) {
+    for (std::list<SgScopeStatement*>::iterator i = astX10ScopeStack.begin(); 
+                     class_symbol == NULL && i != astX10ScopeStack.end(); i++) {
 #else
     for (std::list<SgScopeStatement*>::iterator i = astX10ScopeStack.begin(); i != astX10ScopeStack.end(); i++) {
 #endif
-//cout << "java_support.C lookupTypeSymbol 2" << *i << endl;
-// TODO: Remove this!
-/*
-cout << "Looking for type parameter "
-<< (type_name)
-<< " in "
-<< (isSgClassDefinition(*i) ? isSgClassDefinition(*i) -> get_qualified_name().getString()
+        // TODO: Remove this!
+        SgNode *node = isSgClassDefinition(*i) ? isSgClassDefinition(*i)
+                                 : isSgFunctionDefinition(*i) ? isSgFunctionDefinition(*i) 
+                                                              : (*i);
+        string node_name = isSgClassDefinition(*i) ? isSgClassDefinition(*i) -> get_qualified_name().getString()
                             : isSgFunctionDefinition(*i) ? isSgFunctionDefinition(*i) -> get_qualified_name().getString()
-                                                         : (*i) -> class_name())
-<< " ("
-<< (isSgClassDefinition(*i) ? isSgClassDefinition(*i)
-                            : isSgFunctionDefinition(*i) ? isSgFunctionDefinition(*i)
-                                                         : (*i))
-<< ") "
-<< endl;
-SgSymbol *symbol = (*i) -> lookup_class_symbol(type_name);
-if (symbol != NULL) cout << "symbol " << symbol -> class_name() << " was found for " << (type_name).getString() << endl;
-cout.flush();
+                                                         : (*i) -> class_name();
+        cout << "Looking for type parameter " << (type_name) 
+             << " in " << node_name << " (" << node << ") " << endl;
+        SgSymbol *symbol = (*i) -> lookup_class_symbol(type_name);
+        if (symbol != NULL) cout << "symbol " << symbol -> class_name() << " was found for " << (type_name).getString() << endl;
+        cout.flush();
+
+        // MH-20141017: 
+        // If symbol is found in ::globalScope while package name exists, it means that
+        // the found symbol is a dummy class
+        if (node == ::globalScope 
+           && symbol != NULL
+           && package_name != NULL) {
+            cout << "DUMMY class for " << type_name << " created before..." << endl; 
+//           currentTypeName = formerTypeName;
+           class_symbol = NULL;
+           break;
+//           return NULL; 
+        }
+/*
 */
 
+#if 0
         class_symbol = (isSgClassDefinition(*i)
                             ? lookupSimpleNameTypeInClass((type_name), (SgClassDefinition *) (*i))
                             : (*i) -> lookup_class_symbol(type_name));
+#else
+       // MH-20141009
+       // Since we have each scope stack for each class,
+       // it is fine to lookup just from elemnts in scopestack (that is, "*i" in this code)
+        class_symbol = (*i) -> lookup_class_symbol(type_name);
+#endif
         //MH-20140326
         if (class_symbol != NULL)
             break;
-//cout << "java_support.C lookupTypeSymbol 3" << endl;
         if ((*i) == ::globalScope)
             break;
     }
@@ -2637,7 +2721,7 @@ cout.flush();
     //
 //MH-20140302
 // "#if 1" is default
-#if 1
+#if 0
     if (class_symbol == NULL) {
 //MH-20140302
 return NULL;
@@ -2649,184 +2733,35 @@ return NULL;
         class_symbol = package -> lookup_class_symbol(type_name);
     }
 #endif
+
+    // MH-20141009
+    scopeMap[currentTypeName] = astX10ScopeStack;
+    componentMap[currentTypeName] = astX10ComponentStack;
+    currentTypeName = formerTypeName;
+    it = scopeMap.find(currentTypeName);
+    if (it != scopeMap.end()) {
+        astX10ScopeStack = it->second;
+    }
+	printStack();
+    cout <<"currentType="<<currentTypeName;
+    printCompStack(55);
+    it2 = componentMap.find(currentTypeName);
+    if (it2 != componentMap.end()) {
+        astX10ComponentStack = it2->second;
+    }
+    cout << "class_symbol=" << class_symbol << "(" << type_name << "), class?=" << isSgType(class_symbol) << endl;
+    // MH-20141118: comment out
+#if 0
+    // MH-20141117
+    if (!isSgType(class_symbol)) 
+        return NULL;
+#endif
+    
     return class_symbol;
 }
 
 
 
-#if 0
-SgType *lookupTypeByName(SgName &package_name, SgName &type_name, int num_dimensions) {
-    SgType *type = NULL;
- 
-    ROSE_ASSERT(! astX10ScopeStack.empty());
-
-    //
-    // First check to see if the type is a primitive type.
-    //
-    if (package_name.getString().size() == 0) {
-        if (type_name.getString().compare("boolean") == 0) {
-            type = SgTypeBool::createType();
-        }
-        else if (type_name.getString().compare("byte") == 0) {
-            type = SgTypeSignedChar::createType();
-        }
-        else if (type_name.getString().compare("char") == 0) {
-            type = SgTypeWchar::createType();
-        }
-        else if (type_name.getString().compare("int") == 0) {
-            type = SgTypeInt::createType();
-        }
-        else if (type_name.getString().compare("short") == 0) {
-            type = SgTypeShort::createType();
-        }
-        else if (type_name.getString().compare("float") == 0) {
-            type = SgTypeFloat::createType();
-        }
-        else if (type_name.getString().compare("long") == 0) {
-            type = SgTypeLong::createType();
-        }
-        else if (type_name.getString().compare("double") == 0) {
-            type = SgTypeDouble::createType();
-        }
-        else if (type_name.getString().compare("void") == 0) {
-            type = SgTypeVoid::createType();
-        }
-    }
-
-
-    //
-    // If we are dealing with Reference type ...
-    //
-    if (type == NULL) { // not a primitive type
-        list<SgName> qualifiedTypeName = generateQualifierList(type_name);
-        ROSE_ASSERT(qualifiedTypeName.size());
-        list<SgName>::iterator name = qualifiedTypeName.begin();
-
-        //
-        // If no package was specified, we first check to see if the type is a local type.
-        //
-        list<SgClassSymbol *> local_class_symbols;
-        if (package_name.getString().size() == 0 && qualifiedTypeName.size() == 1) { // No package?  Check to see if this is a local type.
-            SgName short_name = *name;
-// TODO: Remove this!
-/*
-cout << "Checking for local type "
-     << (*name).getString()
-     << endl;
-cout.flush();
-*/
-            lookupLocalTypeSymbols(local_class_symbols, short_name);
-        }
-        SgClassSymbol *class_symbol = (local_class_symbols.size() == 1 ? local_class_symbols.front() : NULL);
-
-        //
-        // ... Continue Search ...
-        //
-        if (class_symbol == NULL) {
-// TODO: Remove this!!!
-/*
-cout << "Looking for package : \"" << package_name.getString() << "\""
-     << endl;
-cout.flush();
-*/
-            SgJavaPackageDeclaration *package_declaration = findPackageDeclaration(package_name);
-// TODO: Remove this!!!
-/*
-if (! package_declaration){
-  cout << "The package : \"" << package_name.getString() << "\" does not exist in the global scope."
-     << endl;
-cout.flush();
-}
-*/
-            ROSE_ASSERT(package_declaration);
-            SgClassDefinition *package_definition = package_declaration -> get_definition();
-            ROSE_ASSERT(package_definition);
-            class_symbol = lookupClassSymbolInScope(package_definition, *name);
-
-            //
-            // If the class_symbol still has not been found and no package was specified, look for the type
-            // in java.lang.
-            //
-            if (class_symbol == NULL && package_name.getString().size() == 0) {
-                class_symbol = lookupClassSymbolInScope(::javaLangPackageDefinition, type_name);
-            }
-
-// TODO: Remove this!!!
-/*
-if (! class_symbol){
-cout << "No symbol found for " << package_name.str() << (package_name.getString().size() ? "." : "") << type_name.str() 
-     << " in file "
-     << (::currentSourceFile ? ::currentSourceFile  -> getFileName(): "???")
-<< endl;
-cout.flush();
-cout << "Here is the stack: " << endl;
-for (std::list<SgScopeStatement*>::iterator i = astX10ScopeStack.begin(); i != astX10ScopeStack.end(); i++) {
-cout << "    "
-<< (isSgClassDefinition(*i) ? isSgClassDefinition(*i) -> get_qualified_name().getString()
-                            : isSgFunctionDefinition(*i) ? (isSgFunctionDefinition(*i) -> get_declaration() -> get_name().getString() + "(...)")
-                                                         : (*i) -> class_name())
-<< " ("
-<< ((unsigned long) (*i))
-<< ")"
-<< endl;
-cout.flush();
-}
-}
-*/
-            ROSE_ASSERT(class_symbol);
-
-            for (name++; name != qualifiedTypeName.end(); name++) {
-                SgClassDeclaration *declaration = isSgClassDeclaration(class_symbol -> get_declaration() -> get_definingDeclaration());
-                ROSE_ASSERT(declaration);
-                SgClassDefinition *definition = declaration -> get_definition();
-                class_symbol = lookupUniqueSimpleNameTypeInClass((*name), definition);
-
-// TODO: Remove this!!!
-/*
-if (! class_symbol){
-cout << "Type " << (*name).getString() << " not found in " << definition -> get_qualified_name().getString()
-     << endl;
-cout.flush();
-cout << "Here is the stack: " << endl;
-for (std::list<SgScopeStatement*>::iterator i = astX10ScopeStack.begin(); i != astX10ScopeStack.end(); i++) {
-cout << "    "
-<< (isSgClassDefinition(*i) ? isSgClassDefinition(*i) -> get_qualified_name().getString()
-                            : isSgFunctionDefinition(*i) ? (isSgFunctionDefinition(*i) -> get_declaration() -> get_name().getString() + "(...)")
-                                                         : (*i) -> class_name())
-<< " ("
-<< ((unsigned long) (*i))
-<< ")"
-<< endl;
-cout.flush();
-}
-}
-*/
-                ROSE_ASSERT(class_symbol);
-            }
-        }
-
-        type = class_symbol -> get_type();
-
-// TODO: This looks like DEAD CODE !!!
-/*
-        SgClassType *class_type = isSgClassType(type);
-        ROSE_ASSERT(class_type);
-        getFullyQualifiedTypeName(class_type);
-*/
-    }
-
-    //
-    // If we are dealing with an array, build the Array type...
-    //
-    if (num_dimensions > 0) {
-        type = SageBuilder::getUniqueJavaArrayType(type, num_dimensions);
-    }
-
-    ROSE_ASSERT(type);
-
-    return type;
-}
-#else
 SgType *lookupTypeByName(SgName &package_name, SgName &type_name, int num_dimensions) {
     SgType *type = NULL;
 
@@ -2838,6 +2773,11 @@ SgType *lookupTypeByName(SgName &package_name, SgName &type_name, int num_dimens
     SgClassSymbol *class_symbol = NULL;
 
     list<SgName>::iterator name = qualifiedTypeName.begin();
+//    list<SgName>::iterator name = qualifiedTypeName.end();
+//    --name;
+    cout << "*1name=" << *name << endl;
+    *name = type_name;
+    cout << "*2name=" << *name << endl;
 
     if (package_name.getString().size() == 0) {
         if (  type_name.getString().compare("boolean") == 0
@@ -2877,34 +2817,59 @@ SgType *lookupTypeByName(SgName &package_name, SgName &type_name, int num_dimens
         }
         else {
             class_symbol = lookupTypeSymbol(*name);
-// MH-20140302
+cout << "1 class_symbol=" << class_symbol << endl;
+            // MH-20140302
             if (!class_symbol) {
                 class_symbol = ::globalScope -> lookup_class_symbol(*name);
+cout << "2 class_symbol=" << class_symbol << endl;
                 if (!class_symbol) {
                     return NULL;
                 }
             }
         }
     }
-   else {
+    else {
+#if 1
+        // MH-20141024
+        class_symbol = lookupTypeSymbol(*name, package_name);
+        cout << "33 class_symbol=" << class_symbol << endl;
+/* // should be found here if a class is dummy, but this is not what I intended
+        if (!class_symbol) {
+            class_symbol = ::globalScope -> lookup_class_symbol(*name);
+            cout << "44 class_symbol=" << class_symbol << endl;
+        }
+*/
+        if (class_symbol) {
+            type = class_symbol -> get_type();
+            return type;
+        }
+#endif
+
         SgJavaPackageDeclaration *package_declaration = findPackageDeclaration(package_name);
-            ROSE_ASSERT(package_declaration);
-            SgClassDefinition *package_definition = package_declaration -> get_definition();
-            ROSE_ASSERT(package_definition);
-            class_symbol = lookupClassSymbolInScope(package_definition, *name);
+        ROSE_ASSERT(package_declaration);
+        SgClassDefinition *package_definition = package_declaration -> get_definition();
+        ROSE_ASSERT(package_definition);
+        class_symbol = lookupClassSymbolInScope(package_definition, *name);
+        //MH-20141024
+        cout << "name=" << *name
+             << ", package=" << package_definition -> get_qualified_name() << "; (" << package_name << ")"
+             << ", class_symbol=" << class_symbol 
+             << endl;
 
-            //
-            // If the class_symbol still has not been found and no package was specified, look for the type
-            // in x10.lang.
-            if (class_symbol == NULL && package_name.getString().size() == 0) {
-                class_symbol = lookupClassSymbolInScope(::x10LangPackageDefinition, type_name);
-            }
-                        if (class_symbol==NULL)
-                                return NULL;
+        //
+        // If the class_symbol still has not been found and no package was specified, look for the type
+        // in x10.lang.
+        if (class_symbol == NULL && package_name.getString().size() == 0) {
+            class_symbol = lookupClassSymbolInScope(::x10LangPackageDefinition, type_name);
+        }
+        if (class_symbol==NULL)
+            return NULL;
 
-                type = class_symbol -> get_type();
+        type = class_symbol -> get_type();
+        // MH-20141024
+        cout << "type=" << type << ", class_symbol=" << class_symbol << endl;
 
-                        return type;
+        return type;
 
 #if 0
         SgClassSymbol *namespace_symbol = ::globalScope -> lookup_class_symbol(package_name);
@@ -2923,13 +2888,13 @@ cout.flush();
 #endif
 // TODO: Remove this!!!
 /*
+*/
 if (! class_symbol){
 cout << "The name is: " << *name << "; "
-     << "The package symbol is: " << package -> get_qualified_name() << "; "
+     << "The package symbol is: " << package_definition -> get_qualified_name() << "; "
      << "No symbol found for " << package_name.str() << (package_name.getString().size() ? "." : "") << (*name) << endl;
 cout.flush();
 }
-*/
     }
 
     //
@@ -2951,7 +2916,8 @@ cout.flush();
 }
 }
         ROSE_ASSERT(class_symbol);
-
+// MH-20141024
+#if 0
         for (name++; name != qualifiedTypeName.end(); name++) {
             SgClassDeclaration *declaration = isSgClassDeclaration(class_symbol -> get_declaration() -> get_definingDeclaration());
             ROSE_ASSERT(declaration);
@@ -2964,8 +2930,9 @@ cout.flush();
             ROSE_ASSERT(class_symbol);
 #endif
         }
+#endif
 // MH-20140825
-                if (class_symbol == NULL)
+        if (class_symbol == NULL)
             class_symbol = lookupTypeSymbol(type_name);
 
         type = class_symbol -> get_type();
@@ -2989,7 +2956,6 @@ cout.flush();
     return type;
 }
 
-#endif
 
 
 //

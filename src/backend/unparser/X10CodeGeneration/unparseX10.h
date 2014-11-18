@@ -56,6 +56,8 @@ class Unparse_X10 : public UnparseLanguageIndependentConstructs
        // DQ (9/6/2010): Mark the derived class to support debugging.
           virtual std::string languageName() const { return "X10 Unparser"; }
 
+	 	  virtual void unparseStatementNumbers ( SgStatement* stmt, SgUnparse_Info& info );
+
           virtual void unparseUnaryOperator           (SgExpression* expr, const char* op, SgUnparse_Info& info);
           virtual void unparseAssnExpr                (SgExpression* expr, SgUnparse_Info& info);   
           virtual void unparseVarRef                  (SgExpression* expr, SgUnparse_Info& info);  
@@ -120,7 +122,10 @@ class Unparse_X10 : public UnparseLanguageIndependentConstructs
 
 //          virtual void unparseGlobalStmt       (SgStatement* stmt, SgUnparse_Info& info);
 
-          virtual void unparseBasicBlockStmt   (SgStatement* stmt, SgUnparse_Info& info);
+          // MH-20141108
+          virtual void unparseBasicBlockStmtWithoutBrace  (SgStatement* stmt, SgUnparse_Info& info);
+
+          virtual void unparseBasicBlockStmt   (SgStatement* stmt, SgUnparse_Info& info); 
           virtual void unparseCaseOrDefaultBasicBlockStmt   (SgStatement* stmt, SgUnparse_Info& info);
 
        // DQ (4/16/2011): Added X10 specific "import" statement.
@@ -157,6 +162,7 @@ class Unparse_X10 : public UnparseLanguageIndependentConstructs
           virtual void unparseAssertStmt       (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseGotoStmt         (SgStatement* stmt, SgUnparse_Info& info);
        // virtual void unparseAsmStmt          (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseAtomicStmt       (SgAtomicStmt* stmt, SgUnparse_Info& info);
 #if 0
           virtual void unparseFinishStmt        (SgFinishStmt* stmt, SgUnparse_Info& info);
           virtual void unparseAtStmt                    (SgAtStmt* stmt, SgUnparse_Info& info);
@@ -271,6 +277,8 @@ class Unparse_X10 : public UnparseLanguageIndependentConstructs
 
           void unparseX10TypeExpression(SgExpression *, SgUnparse_Info& info);
           void unparseHereExpression(SgExpression *, SgUnparse_Info& info);
+          void unparseAtExpression(SgExpression *, SgUnparse_Info& info);
+          void unparseFinishExpression(SgExpression *, SgUnparse_Info& info);
    };
 
 #endif

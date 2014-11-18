@@ -529,6 +529,8 @@ BUILD_BINARY_PROTO(XorAssignOp)
 BUILD_BINARY_PROTO(VarArgCopyOp)
 BUILD_BINARY_PROTO(VarArgStartOp)
 
+BUILD_BINARY_PROTO(DotDotExp)
+
 #undef BUILD_BINARY_PROTO
 
 //! Build a conditional expression ?:
@@ -775,6 +777,9 @@ buildTypedefDeclaration(const std::string& name, SgType* base_type, SgScopeState
 
 ROSE_DLL_API SgTypedefDeclaration* 
 buildTypedefDeclaration_nfi(const std::string& name, SgType* base_type, SgScopeStatement* scope = NULL, bool has_defining_base=false);
+
+// MH-20141106
+ROSE_DLL_API SgClassPropertyList * buildClassPropertyList(SgInitializedName* in1 = NULL, SgInitializedName* in2 = NULL, SgInitializedName* in3 = NULL, SgInitializedName* in4 = NULL, SgInitializedName* in5 = NULL, SgInitializedName* in6 = NULL, SgInitializedName* in7 = NULL, SgInitializedName* in8 = NULL, SgInitializedName* in9 = NULL, SgInitializedName* in10 = NULL);
 
 //! Build an empty SgFunctionParameterList, possibly with some initialized names filled in
 ROSE_DLL_API SgFunctionParameterList * buildFunctionParameterList(SgInitializedName* in1 = NULL, SgInitializedName* in2 = NULL, SgInitializedName* in3 = NULL, SgInitializedName* in4 = NULL, SgInitializedName* in5 = NULL, SgInitializedName* in6 = NULL, SgInitializedName* in7 = NULL, SgInitializedName* in8 = NULL, SgInitializedName* in9 = NULL, SgInitializedName* in10 = NULL);
@@ -1202,15 +1207,28 @@ ROSE_DLL_API SgCommonBlock* buildCommonBlock(SgCommonBlockObject* first_block=NU
 ROSE_DLL_API SgCatchOptionStmt* buildCatchOptionStmt(SgVariableDeclaration* condition=NULL, SgStatement* body=NULL);
 
 // MH (6/10/2014): Added async support
-ROSE_DLL_API SgAsyncStmt* buildAsyncStmt(SgBasicBlock *body);
+// MH (11/7/2014): Added clock support with async
+ROSE_DLL_API SgAsyncStmt* buildAsyncStmt(SgBasicBlock *body, bool isClocked);
 
 // MH (6/11/2014): Added finish support
-ROSE_DLL_API SgFinishStmt* buildFinishStmt(SgBasicBlock *body);
+// MH (11/7/2014): Added clock support with finish
+ROSE_DLL_API SgFinishStmt* buildFinishStmt(SgBasicBlock *body, bool isClocked);
+
+// MH (11/12/2014): Added atomic support
+ROSE_DLL_API SgAtomicStmt* buildAtomicStmt(SgBasicBlock *body);
 
 // MH (6/11/2014): Added at support
 ROSE_DLL_API SgAtStmt* buildAtStmt(SgExpression *expression, SgBasicBlock *body);
 
+// MH (9/16/2014): Added at support
+ROSE_DLL_API SgAtExp* buildAtExp(SgExpression *expression, SgBasicBlock *body);
+
+// MH (11/7/2014): Added finish expression support
+ROSE_DLL_API SgFinishExp* buildFinishExp(SgExpression *expression, SgBasicBlock *body);
+
 ROSE_DLL_API SgHereExp* buildHereExpression();
+
+ROSE_DLL_API SgDotDotExp* buildDotDotExp();
 
 // driscoll6 (6/9/2011): Adding support for try stmts.
 // ! Build a try statement.

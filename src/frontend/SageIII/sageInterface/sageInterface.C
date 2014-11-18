@@ -8475,10 +8475,12 @@ bool SageInterface::loopUnrolling(SgForStatement* target_loop, size_t unrolling_
   // normalize the target loop first
   if (!forLoopNormalization(target_loop));
   {// the return value is not reliable
-    //    cerr<<"Error in SageInterface::loopUnrolling(): target loop cannot be normalized."<<endl;
+    // MH-20141111 removed comment out
+        cerr<<"Error in SageInterface::loopUnrolling(): target loop cannot be normalized."<<endl;
     //    dumpInfo(target_loop);
     //    return false;
   }
+  
   // grab the target loop's essential header information
   SgInitializedName* ivar = NULL;
   SgExpression* lb = NULL;
@@ -8507,11 +8509,15 @@ bool SageInterface::loopUnrolling(SgForStatement* target_loop, size_t unrolling_
   raw_range_exp->set_need_paren(true);
   SgExpression* range_d_step_exp = buildDivideOp(raw_range_exp,copyExpression(step));//(ub-lb+1)/step
   SgExpression* condition_1 = buildEqualityOp(buildModOp(copyExpression(raw_range_exp),copyExpression(step)),buildIntVal(0)); //(ub-lb+1)%step ==0
+  // MH-20141111
+  cout << "ABC3" << endl;
 
   SgExpression* iter_count_exp = buildConditionalExp(condition_1,range_d_step_exp, buildAddOp(copyExpression(range_d_step_exp),buildIntVal(1)));
   // fringe = iteration_count%unroll_factor==0 ? 0:unroll_factor*step
   SgExpression* condition_2 = buildEqualityOp(buildModOp(iter_count_exp, buildIntVal(unrolling_factor)), buildIntVal(0));
   SgExpression* initor = buildConditionalExp(condition_2, buildIntVal(0), buildMultiplyOp(buildIntVal(unrolling_factor),copyExpression(step)));
+  // MH-20141111
+  cout << "ABC4" << endl;
 
    SgScopeStatement* scope = target_loop->get_scope();
    ROSE_ASSERT(scope != NULL);
@@ -8520,6 +8526,8 @@ bool SageInterface::loopUnrolling(SgForStatement* target_loop, size_t unrolling_
    insertStatementBefore(target_loop, fringe_decl);
    attachComment(fringe_decl, "iter_count = (ub-lb+1)%step ==0?(ub-lb+1)/step: (ub-lb+1)/step+1;");
    attachComment(fringe_decl, "fringe = iter_count%unroll_factor==0 ? 0:unroll_factor*step");
+  // MH-20141111
+  cout << "ABC5" << endl;
 
   // compile-time evaluate to see if initor is a constant of value 0
   // if so, the iteration count can be divided even by the unrolling factor
@@ -8535,6 +8543,8 @@ bool SageInterface::loopUnrolling(SgForStatement* target_loop, size_t unrolling_
     if (isSgIntVal(init1->get_operand_i()))
      if (isSgIntVal(init1->get_operand_i())->get_value() == 0)
        needFringe = false;
+  // MH-20141111
+  cout << "ABC6" << endl;
 
   // rewrite loop header ub --> ub -fringe; step --> step *unrolling_factor
    SgBinaryOp* ub_bin_op = isSgBinaryOp(ub->get_parent());
@@ -8546,10 +8556,14 @@ bool SageInterface::loopUnrolling(SgForStatement* target_loop, size_t unrolling_
      ub_bin_op->set_rhs_operand(copyExpression(ub));
      removeStatement(fringe_decl);
    }
+  // MH-20141111
+  cout << "ABC7" << endl;
 
    SgBinaryOp* step_bin_op = isSgBinaryOp(step->get_parent());
    ROSE_ASSERT(step_bin_op != NULL);
    step_bin_op->set_rhs_operand(buildMultiplyOp(copyExpression(step),buildIntVal(unrolling_factor)));
+  // MH-20141111
+  cout << "ABC8" << endl;
 
    bool isPlus = false;
    if (isSgPlusAssignOp(step_bin_op))
@@ -8562,6 +8576,8 @@ bool SageInterface::loopUnrolling(SgForStatement* target_loop, size_t unrolling_
       dumpInfo(step_bin_op);
       ROSE_ASSERT(false);
     }
+  // MH-20141111
+  cout << "ABC8" << endl;
 
    // copy loop body factor -1 times, and replace reference to ivar  with ivar +/- step*[1 to factor-1]
    for (size_t i =1; i<unrolling_factor; i++)
@@ -9848,6 +9864,58 @@ SageInterface::setParameterList(actualFunction * func,SgFunctionParameterList * 
    }
 #endif
 
+// MH-20141106
+SgVariableSymbol* addPropertyArg(SgClassPropertyList *paraList, SgInitializedName* initName, bool isPrepend)
+   {
+     ROSE_ASSERT(paraList != NULL);
+     ROSE_ASSERT(initName != NULL);
+
+     if (isPrepend == true)
+          paraList->prepend_arg(initName);
+       else
+          paraList->append_arg(initName);
+
+     if (initName->get_parent() == NULL)
+          initName->set_parent(paraList);
+
+     ROSE_ASSERT(initName->get_parent() == paraList);
+     SgClassDeclaration* class_decl= isSgClassDeclaration(paraList->get_parent());
+
+     SgScopeStatement* scope = NULL;
+     if (class_decl != NULL)
+        {
+          if ((class_decl->get_definingDeclaration()) == class_decl )
+             {
+               SgClassDefinition* class_def = class_decl->get_definition();
+               ROSE_ASSERT(class_def);
+               scope = class_def;
+             }
+            else
+             {
+               scope = class_decl->get_scope();
+             }
+ 
+          initName->set_declptr(class_decl);
+        }
+
+     initName->set_scope(scope);
+     if (scope != NULL)
+        {
+          SgVariableSymbol* sym = isSgVariableSymbol(initName->get_symbol_from_symbol_table());
+          if (sym == NULL)
+             {
+               sym = new SgVariableSymbol(initName);
+               scope->insert_symbol(initName->get_name(), sym);
+               sym->set_parent(scope->get_symbol_table());
+             }
+          return sym;
+        }
+       else
+        {
+          return NULL;
+        }
+   }
+
 // static 
 SgVariableSymbol* addArg(SgFunctionParameterList *paraList, SgInitializedName* initName, bool isPrepend)
    {
@@ -9919,6 +9987,18 @@ SgVariableSymbol* addArg(SgFunctionParameterList *paraList, SgInitializedName* i
           return NULL;
         }
    }
+
+// MH-20141106
+SgVariableSymbol* SageInterface::appendPropertyArg(SgClassPropertyList *paraList, SgInitializedName* initName)
+{
+  return addPropertyArg(paraList,initName,false);
+}
+
+// MH-20141106
+SgVariableSymbol* SageInterface::prependPropertyArg(SgClassPropertyList *paraList, SgInitializedName* initName)
+{
+  return addPropertyArg(paraList,initName,true);
+}
 
 SgVariableSymbol* SageInterface::appendArg(SgFunctionParameterList *paraList, SgInitializedName* initName)
 {

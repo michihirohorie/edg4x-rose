@@ -784,5 +784,10 @@ SgJavaUnionType
 SgJavaParameterType
 SgAsyncStmt
 SgFinishStmt
+SgAtomicStmt
 SgAtStmt
+SgAtExp
 SgHereExp
+SgDotDotExp
+SgFinishExp
+SgClassPropertyList

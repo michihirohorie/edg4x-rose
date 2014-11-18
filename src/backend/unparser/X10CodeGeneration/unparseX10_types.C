@@ -27,6 +27,8 @@ Unparse_X10::unparseType(SgType* type, SgUnparse_Info& info)
 
      ROSE_ASSERT(type != NULL);
 
+// MH-20141014
+//cout << "type=" << type->variantT()<< endl;
      switch (type->variantT())
         {
           case V_SgTypeVoid:       unparseTypeVoid( isSgTypeVoid(type), info); break;
@@ -75,24 +77,22 @@ Unparse_X10::unparseTypedefType(SgTypedefType *type, SgUnparse_Info& info)
 
 
 void
-Unparse_X10::unparseClassType(SgClassType *type, SgUnparse_Info& info)
-   {
-     //SgClassDeclaration *decl = isSgClassDeclaration(type->get_declaration());
-     //ROSE_ASSERT(decl != NULL);
-     //unparseName(decl->get_name(), info);
-     //todo templates and qualified names
-
-     if (isSgJavaParameterType(type)) { // -> attributeExists("is_parameter_type")) {
-         curprint(type -> get_name().getString());
-     }
-     else {
-                string t = type -> get_qualified_name().getString();
-                string shorten = t.substr(2);
-                replaceString(shorten, "::", ".");
-//         curprint(type -> get_qualified_name().getString());
-         curprint(shorten);
-     }
-   }
+Unparse_X10::unparseClassType(SgClassType *type, SgUnparse_Info& info) {
+    //SgClassDeclaration *decl = isSgClassDeclaration(type->get_declaration());
+    //ROSE_ASSERT(decl != NULL);
+    //unparseName(decl->get_name(), info);
+    //todo templates and qualified names
+    if (isSgJavaParameterType(type)) { // -> attributeExists("is_parameter_type")) {
+        curprint(type -> get_name().getString());
+    }
+    else {
+        string t = type -> get_qualified_name().getString();
+        string shorten = t.substr(2);
+        replaceString(shorten, "::", ".");
+//      curprint(type -> get_qualified_name().getString());
+        curprint(shorten);
+    }
+}
 
 
 void Unparse_X10::unparseTypeArguments(SgTemplateParameterList *type_list, SgUnparse_Info& info) {
@@ -290,7 +290,6 @@ Unparse_X10::unparseArrayType(SgArrayType *array_type, SgUnparse_Info& info) {
 
 void
 Unparse_X10::unparseX10QualifiedType(SgJavaQualifiedType *qualified_type, SgUnparse_Info& info) {
-curprint("224");
     unparseType(qualified_type -> get_parent_type(), info);
     curprint(".");
 

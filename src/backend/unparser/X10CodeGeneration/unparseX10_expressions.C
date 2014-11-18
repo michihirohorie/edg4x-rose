@@ -25,7 +25,7 @@ using namespace std;
 
 void Unparse_X10::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_Info& info) {
   // This is the X10 specific expression code generation
-#if 0
+#if 1
      printf ("In Unparse_X10::unparseLanguageSpecificExpression ( expr = %p = %s ) language = %s \n",expr,expr->class_name().c_str(),languageName().c_str());
 #endif
 
@@ -39,6 +39,8 @@ void Unparse_X10::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
         }
     }
 
+// MH-20141014
+//cout << "2 type=" << expr->variantT()<< endl;
     switch (expr->variant()) {
         case UNARY_EXPRESSION:  { unparseUnaryExpr (expr, info); break; }
         case BINARY_EXPRESSION: { unparseBinaryExpr(expr, info); break; }
@@ -87,8 +89,10 @@ void Unparse_X10::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
         case V_SgJavaNormalAnnotation:       { unparseX10NormalAnnotation(expr, info); break; }
 
         case V_SgJavaTypeExpression:         { unparseX10TypeExpression(expr, info); break; }
-                // MH-20140730
-        case V_SgHereExp:       { unparseHereExpression(expr, info); break; }
+        // MH-20140730
+        case V_SgHereExp:              { unparseHereExpression(expr, info); break; }
+        case V_SgAtExp:                { unparseAtExpression(expr, info); break; }
+        case V_SgFinishExp:            { unparseFinishExpression(expr, info); break; }
 
 
         default: {
@@ -132,6 +136,7 @@ void Unparse_X10::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
                 case V_SgRshiftOp:
                 case V_SgSubtractOp:
                 case V_SgCommaOpExp: // charles4 10/14/2011
+                case V_SgDotDotExp:
                      unparseBinaryOp(isSgBinaryOp(expr), info ); break;
 
                 case V_SgPlusPlusOp:
@@ -727,8 +732,9 @@ void Unparse_X10::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info) {
         bool isConnectionUtil = 0;
         if (func_call -> attributeExists("prefix")) {
                 AstRegExAttribute *attribute = (AstRegExAttribute *) func_call->getAttribute("prefix");
-                string class_name("X10RoseUtility");
+                string class_name("::X10RoseUtility");
                 string expr = attribute->expression;
+                cout << "CLASS=" << expr << endl;
                 if (expr.compare(0, class_name.length(), class_name) == 0) {
                         isConnectionUtil = 1;
                 }
@@ -736,14 +742,17 @@ void Unparse_X10::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info) {
         if (isConnectionUtil) {
                 SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(func_call->get_function());
                 string funcName = mfunc_ref->get_symbol()->get_name(); 
-                string parse = "Long_parse";
                 if (funcName == "Rail_size") {
                         unparseExpression(func_call->get_args()->get_expressions()[0], info);
                         curprint(".size");
                 }
-                else if (funcName.compare(0, parse.length(), parse) == 0) {
+                else if (funcName.compare(0, ((string)"x10_lang_Long_parse").length(), "x10_lang_Long_parse") == 0) {
                         curprint("Long.parse(");
-  //                      curprint(funcName);
+                        unparseExpression(func_call->get_args()->get_expressions()[0], info);
+                        curprint(")");
+                }
+                else if (funcName.compare(0, ((string)"x10_lang_Int_parseInt").length(), "x10_lang_Int_parseInt") == 0) {
+                        curprint("Int.parseInt(");
                         unparseExpression(func_call->get_args()->get_expressions()[0], info);
                         curprint(")");
                 }
@@ -753,12 +762,13 @@ void Unparse_X10::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info) {
 
         if (func_call -> attributeExists("prefix")) {
                 AstRegExAttribute *attribute = (AstRegExAttribute *) func_call->getAttribute("prefix");
-                string expr = attribute->expression;
-                if (expr.compare(0, 2, "::") == 0) {
-                    expr = expr.substr(2);
-                }
-                replaceString(expr, "::", ".");
-                curprint(expr);
+				string expr = attribute->expression;
+				if (expr.compare(0, 2, "::") == 0) {
+					expr = expr.substr(2);
+				}
+				replaceString(expr, "::", ".");
+				curprint(expr);
+//                curprint(attribute -> expression);
                 curprint(".");
         }
 
@@ -925,98 +935,34 @@ Unparse_X10::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
 */
      curprint("new ");
 
-  // curprint ( "\n /* Output any placement arguments */ \n";
-     // charles4: 02/26/2012  I don't understand the importance of this code.
-     /*
-     SgUnparse_Info newinfo(info);
-     newinfo.unset_inVarDecl();
-     if (new_op->get_placement_args() != NULL)
-        {
-       // printf ("Output placement arguments for new operator \n");
-       curprint ( "\n*//* Output placement arguments for new operator *//*\n");
-
-       // DQ (1/5/2006): The placement arguments require "() " (add a space to make it look nice)
-          curprint ( "(");
-          unparseExpression(new_op->get_placement_args(), newinfo);
-          curprint ( ") ");
-        }
-
-     newinfo.unset_PrintName();
-     newinfo.unset_isTypeFirstPart();
-     newinfo.unset_isTypeSecondPart();
-     newinfo.set_SkipClassSpecifier();
-
-  // DQ (11/26/2004): In KULL this is set to true when I think it should not be (could not reproduce error in smaller code!)
-  // the problem is that the type name is not being output after the new keyword.  It should unparse to "new typename (args)" and 
-  // instead just unparses to "new (args)".  Error occurprints in generated code (rose_polygonalaleremapswig.C).
-     newinfo.unset_SkipBaseType();
-     */
-  // This fixes a bug having to do with the unparsing of the type name of constructors in return statements.
-
-  // curprint ( "\n /* Output type name for new operator */ \n";
-
-  // printf ("In Unparse_ExprStmt::unparseNewOp: new_op->get_type()->sage_class_name() = %s \n",new_op->get_type()->sage_class_name());
-
-  // DQ (1/17/2006): The the type specified explicitly in the new expressions syntax, 
-  // get_type() has been modified to return a pointer to new_op->get_specified_type().
-  // unp->u_type->unparseType(new_op->get_type(), newinfo);
-
-  //
-  // charles4 - 02/26/2012 The specialized call below to unparse the type was replaced by the simpler call because it invokes the wrong function!
-  //
-     /*
-     unp->u_type->unparseType(new_op->get_specified_type(), newinfo);
-     */
      if (isSgArrayType(new_op -> get_specified_type())) {
-// TODO: Remove this!
-/*
-         SgArrayType *array_type = isSgArrayType(new_op -> get_specified_type());
-         while(isSgArrayType(array_type -> get_base_type())) { // find the base type...
-             array_type = isSgArrayType(array_type -> get_base_type());
-         }
 
-         if (isSgDotExp(new_op -> get_parent()) && isSgClassType(new_op -> get_specified_type())) {
-             SgClassType *class_type = isSgClassType(array_type -> get_base_type());
-             ROSE_ASSERT(class_type);
-             curprint(class_type -> get_name().getString());
+         curprint("Rail[");
+         AstRegExAttribute *attribute = (AstRegExAttribute *) new_op -> getAttribute("type");
+         if (attribute) {
+             curprint(attribute -> expression);
          }
          else {
-*/
-// TODO: Remove this!
-//             unparseType(pointer_type -> get_base_type(), info);
-
-                        curprint("Rail[");
-             AstRegExAttribute *attribute = (AstRegExAttribute *) new_op -> getAttribute("type");
-             if (attribute) {
-                 curprint(attribute -> expression);
-             }
-             else {
-                 SgType *type = new_op -> get_specified_type();
-                 do {
-                     SgType *type = isSgArrayType(type) -> get_base_type();
-                 } while (isSgArrayType(type));
-                 unparseType(type, info);
-             }
-                                curprint("]");
-//         }
+             SgType *type = new_op -> get_specified_type();
+             do {
+                 SgType *type = isSgArrayType(type) -> get_base_type();
+             } while (isSgArrayType(type));
+             unparseType(type, info);
+         }
+         curprint("]");
 
          bool has_aggregate_initializer = new_op -> attributeExists("initializer");
          SgConstructorInitializer *init = new_op -> get_constructor_args();
          ROSE_ASSERT(init);
          vector<SgExpression *> args = init -> get_args() -> get_expressions();
          for (int i = 0; i < args.size(); i++) {
-//             curprint ("[");
              curprint ("(");
              if (! has_aggregate_initializer) {
                  unparseExpression(args[i], info);
              }
-//             curprint("]");
              curprint(")");
          }
 
-         //
-         // If this array allocation expression contains an aggregate initializer process it now.
-         //
          if (has_aggregate_initializer) {
              AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) new_op -> getAttribute("initializer");
              SgAggregateInitializer *initializer = isSgAggregateInitializer(attribute -> getNode());
@@ -1025,28 +971,18 @@ Unparse_X10::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
          }
      }
      else {
-// TODO: Remove this!
-/*
-         if (isSgDotExp(new_op -> get_parent()) && isSgClassType(new_op->get_specified_type())) {
-             SgClassType *class_type = isSgClassType(new_op->get_specified_type());
-             ROSE_ASSERT(class_type);
-             curprint(class_type -> get_name().getString());
+         AstRegExAttribute *attribute = (AstRegExAttribute *) new_op -> getAttribute("type");
+         if (attribute) {
+             string expr = attribute->expression;
+             if (expr.compare(0, 2, "::") == 0) 
+                 expr = expr.substr(2);
+             replaceString(expr, "::", ".");
+             curprint(expr);
+//             curprint(attribute -> expression);
          }
          else {
-*/
-// TODO: Remove this!
-//             unparseType(new_op->get_specified_type(), info);
-
-
-             AstRegExAttribute *attribute = (AstRegExAttribute *) new_op -> getAttribute("type");
-             if (attribute) {
-                 curprint(attribute -> expression);
-             }
-             else {
-                 unparseType(new_op -> get_specified_type(), info);
-             }
-//         }
-
+             unparseType(new_op -> get_specified_type(), info);
+         }
          curprint ("(");
          ROSE_ASSERT(new_op -> get_constructor_args());
          SgConstructorInitializer *init = new_op -> get_constructor_args();
@@ -1059,9 +995,6 @@ Unparse_X10::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
          }
          curprint (")");
 
-         //
-         // Check if this is an allocation expression for an anonymous class. In such a case, output the body of the class.
-         //
          if (new_op -> attributeExists("body")) {
              AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) new_op -> getAttribute("body");
              SgClassDeclaration *class_declaration = isSgClassDeclaration(attribute -> getNode());
@@ -1349,7 +1282,12 @@ Unparse_X10::unparseX10InstanceOfOp(SgExpression* expr, SgUnparse_Info & info) {
 
     AstRegExAttribute *attribute = (AstRegExAttribute *) inst_op -> getAttribute("type");
     if (attribute) {
-        curprint(attribute -> expression);
+        string expr = attribute->expression;
+        if (expr.compare(0, 2, "::") == 0) 
+            expr = expr.substr(2);
+        replaceString(expr, "::", ".");
+        curprint(expr);
+//        curprint(attribute -> expression);
     }
     else {
         unparseType(inst_op -> get_operand_type(), info);
@@ -1404,6 +1342,7 @@ Unparse_X10::unparseBinaryOp(SgBinaryOp* op,
         case V_SgDivideOp:             curprint(" / ");   break;
         case V_SgDotExp:               curprint(".");     break; // charles4: There is no Dot operation per se in X10
         case V_SgArrowExp:             curprint(".");     break; // charles4: The X10 dot operator is equivalent to the C Arrow operator
+        case V_SgDotDotExp:            curprint("..");     break; // MH-20140917
         case V_SgEqualityOp:           curprint(" == ");  break;
         case V_SgGreaterOrEqualOp:     curprint(" >= ");  break;
         case V_SgGreaterThanOp:        curprint(" > ");   break;
@@ -1636,17 +1575,40 @@ Unparse_X10::unparseX10TypeExpression(SgExpression *expr, SgUnparse_Info& info) 
     SgJavaTypeExpression *type_expression = isSgJavaTypeExpression(expr);
     AstRegExAttribute *attribute = (AstRegExAttribute *) type_expression -> getAttribute("type");
     if (attribute) {
+//        curprint(attribute -> expression);
         string expr = attribute->expression;
-        if (expr.compare(0, 2, "::") == 0) {
-           expr = expr.substr(2);
-        }
+        if (expr.compare(0, 2, "::") == 0) 
+            expr = expr.substr(2);
         replaceString(expr, "::", ".");
         curprint(expr);
+// MH-20140918
+//cout << "unparseX10TypeExpression=" << attribute -> expression << endl;
     }
     else {
         unparseType(type_expression -> get_type(), info);
     }
 }
+
+void
+Unparse_X10::unparseAtExpression(SgExpression *expr, SgUnparse_Info& info) {
+    SgAtExp *at = isSgAtExp(expr);
+	curprint("(");
+    curprint_indented("at (", info);
+    unparseExpression(at->get_expression(), info);
+    curprint_indented(") ", info);
+    unparseStatement(at->get_body(), info);
+	curprint(")");
+}
+
+void
+Unparse_X10::unparseFinishExpression(SgExpression *expr, SgUnparse_Info& info) {
+    SgFinishExp *finish = isSgFinishExp(expr);
+    curprint_indented("finish (", info);
+    unparseExpression(finish->get_expression(), info);
+    curprint_indented(") ", info);
+    unparseStatement(finish->get_body(), info);
+}
+
 
 void
 Unparse_X10::unparseHereExpression(SgExpression *expr, SgUnparse_Info& info) {
