@@ -73,6 +73,8 @@ TESTCODES = \
     LocalAssignment0.x10 \
     FieldDecl0.x10 \ 
     PropertyDecl0.x10 \
+    PropertyDecl1.x10 \
+    PropertyDecl2.x10 \
     ParseInt0.x10 \ 
     Field0.x10 \ 
     Field1.x10 \ 
