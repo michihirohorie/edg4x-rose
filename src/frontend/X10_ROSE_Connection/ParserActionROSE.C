@@ -5021,7 +5021,6 @@ ROSE_ASSERT(! isSgMemberFunctionType(receiver_type));
         SgClassDefinition *class_def = declaration -> get_definition();
         // MH-20141118 : initialized with NULL
         SgVariableSymbol *variable_symbol = NULL;
-        cout << "aaa0:" << variable_symbol << endl;
         if (class_def -> attributeExists("properties")) {
             AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) class_def -> getAttribute("properties");
             SgClassPropertyList *initialized_list = isSgClassPropertyList(attribute->getNode());
@@ -5030,22 +5029,16 @@ ROSE_ASSERT(! isSgMemberFunctionType(receiver_type));
             SgInitializedNamePtrList::iterator name_it;
             for (name_it = names.begin(); name_it != names.end(); name_it++) {
                 SgInitializedName *iname = *name_it;
-                cout << "aaa1:" << field_name << ", " << iname->get_name().getString() << endl;
                 if (field_name == iname->get_name().getString()) {
-                    cout << "aaa2: initialized name=" << iname->get_name().getString() << "(" << iname << ")" << endl;
+                    SgVariableSymbol *symbol = ((SgScopeStatement *)class_def) -> lookup_variable_symbol(field_name);
                     variable_symbol = isSgVariableSymbol(iname -> search_for_symbol_from_symbol_table());
-                    cout << "aaa22:" << variable_symbol << endl;
                     break;
                 }
             }
         }
-        cout << "aaa3:" << variable_symbol << endl;
         if (!variable_symbol) {
-            cout << "aaa4" << endl;
             variable_symbol = lookupSimpleNameVariableInClass(field_name, declaration -> get_definition());
-            cout << "aaa5" << endl;
         }
-        cout << "aaa6:" << variable_symbol << endl;
 
 // TODO: Remove this !
 /*

@@ -691,7 +691,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBuildArgumentSupport(JNIEnv
     astX10ComponentStack.push(initialized_name);
 
 // TODO: Remove this!
-cout << "Pushed " << initialized_name->get_name() << ", " << initialized_name -> class_name() << endl; cout.flush();
+cout << "Pushed " << initialized_name->get_name() << ", " << initialized_name -> class_name() <</* ", " << initialized_name->search_for_symbol_from_symbol_table() <<*/ endl; cout.flush();
 
     if (SgProject::get_verbose() > 0)
         printf ("Exiting Build argument support\n");
@@ -896,11 +896,14 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBuildFieldSupport(JNIEnv *e
         setX10SourcePosition(*name_it, env, x10Token);
     }
 */
-    cout << "name=" << name;
+    cout << "1name=" << name;
     printCompStack(-2);
     astX10ComponentStack.push(variableDeclaration);
-    cout << "name=" << name;
+    cout << "2name=" << name;
     printCompStack(-1);
+    // MH-20141119
+    SgVariableSymbol *symbol = ((SgScopeStatement *)variableDeclaration->get_parent()) -> lookup_variable_symbol(name);
+    cout << "890symbol=" << symbol << endl;
 
     if (SgProject::get_verbose() > 0)
         variableDeclaration -> get_file_info() -> display("source position in cactionBuildFieldSupport(): debug");
@@ -4002,7 +4005,9 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAppendProperty (JNIEnv *env
     SgType *argument_type = astX10ComponentStack.popType();
     ROSE_ASSERT(argument_type);
 
-    SgInitializedName *initialized_name = SageBuilder::buildInitializedName(argument_name, argument_type, NULL);
+    SgClassDefinition *class_definition = isSgClassDefinition(astX10ScopeStack.top()); 
+
+    SgInitializedName *initialized_name = SageBuilder::buildInitializedName(argument_name, argument_type, NULL); 
     setX10SourcePosition(initialized_name, env, x10Token);
     ROSE_ASSERT(initialized_name != NULL);
 
@@ -4049,7 +4054,13 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionSetProperties (JNIEnv *env,
         for (list<SgInitializedName *>::iterator t = initialized_list.begin(); t != initialized_list.end(); t++) {
             (*t)->set_parent(class_definition);
             (*t)->set_scope(class_definition);
-            parameter_list->prepend_arg(*t);
+//            parameter_list->prepend_arg(*t);
+            parameter_list->append_arg(*t);
+
+            SgVariableSymbol *sym = new SgVariableSymbol((*t));
+            ((SgScopeStatement *)class_definition)->insert_symbol((*t)->get_name(), sym);
+            sym->set_parent(((SgScopeStatement *)class_definition)->get_symbol_table());
+//            SgVariableSymbol *symbol = ((SgScopeStatement *)class_definition) -> lookup_variable_symbol((*t)->get_name());
         }
         SgClassDeclaration *class_declaration = class_definition -> get_declaration();
         parameter_list->set_parent(class_declaration);
