@@ -1350,45 +1350,46 @@ Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
          curprint(": ");
          unparseName(mfuncdecl_stmt->get_associatedClassDeclaration()->get_name(), info);
      }
-     else {
+    else {
 // TODO: Remove this !
 /*
          ROSE_ASSERT(mfuncdecl_stmt->get_type());
          ROSE_ASSERT(mfuncdecl_stmt->get_type()->get_return_type());
          unparseType(mfuncdecl_stmt->get_type()->get_return_type(), info);
 */
-         AstRegExAttribute *attribute = (AstRegExAttribute *) mfuncdecl_stmt -> getAttribute("type");
-         if (attribute) {
-//             curprint(attribute -> expression);
-                        if (attribute -> expression != "void") {
-                        curprint(": ");
-//                curprint(attribute -> expression);
-			 	 string exp = attribute->expression;
-            	 if (exp.length() > 2 && exp.at(0) == ':' && exp.at(1) == ':') {
-                     exp = exp.substr(2);
-                     replaceString(exp, "::", ".");
-                 }
-                 curprint(exp);
-   
-                        } 
-         }
-         else {
+        AstRegExAttribute *attribute = (AstRegExAttribute *) mfuncdecl_stmt -> getAttribute("type");
+        if (attribute) {
+//          curprint(attribute -> expression);
+            if (attribute -> expression != "void") {
+                curprint(": ");
+#if 0
+//              curprint(attribute -> expression);
+			    string exp = attribute->expression;
+            	if (exp.length() > 2 && exp.at(0) == ':' && exp.at(1) == ':') {
+                    exp = exp.substr(2);
+                    replaceString(exp, "::", ".");
+                }
+                curprint(exp);
+#endif
+                unparseType(mfuncdecl_stmt->get_type()->get_return_type(), info);
+            } 
+        }
+        else {
 //             unparseType(mfuncdecl_stmt -> get_type() -> get_return_type(), info);
-                        if (mfuncdecl_stmt -> get_type() -> get_return_type() -> get_mangled().getString() != "void") {
-                        curprint(": ");
-//                unparseType(mfuncdecl_stmt -> get_type() -> get_return_type(), info);
-                 string exp = mfuncdecl_stmt -> get_type() -> get_return_type()-> get_mangled().getString() ;
-            	  if (exp.length() > 2 && exp.at(0) == ':' && exp.at(1) == ':') {
-                      exp = exp.substr(2);
-                      replaceString(exp, "::", ".");
-                  }
+            if (mfuncdecl_stmt -> get_type() -> get_return_type() -> get_mangled().getString() != "void") {
+                curprint(": ");
+//              unparseType(mfuncdecl_stmt -> get_type() -> get_return_type(), info);
+                string exp = mfuncdecl_stmt -> get_type() -> get_return_type()-> get_mangled().getString() ;
+                if (exp.length() > 2 && exp.at(0) == ':' && exp.at(1) == ':') {
+                    exp = exp.substr(2);
+                    replaceString(exp, "::", ".");
+                }
 //                  unparseType(mfuncdecl_stmt -> get_type() -> get_return_type(), info);
-                    curprint(exp);
- 
-                        }
-         }
-         curprint(" ");
-     }
+                curprint(exp);
+            }
+        }
+        curprint(" ");
+    }
 #endif
          curprint(exception_attribute != NULL ?  ("throws " + exception_attribute -> expression + " ").c_str() : "");
          SgFunctionDefinition *function_definition = mfuncdecl_stmt->get_definition();
