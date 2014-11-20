@@ -79,7 +79,9 @@ TESTCODES = \
     Field0.x10 \ 
     Field1.x10 \ 
     Field0_p.x10 \ 
-    Field1_p.x10 
+    Field1_p.x10 \
+    Exception0.x10 \
+    Exception1.x10 
 
 
 # Warning: Use -rose:output to unparse file in build tree, rather
