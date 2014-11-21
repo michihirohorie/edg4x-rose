@@ -899,23 +899,35 @@ cout.flush();
 }
 */
 
-        // MH (7/7/2014) : Added
+    // MH (7/7/2014) : Added
     unparseName(init_name -> get_name(), info);
     curprint(" : ");
 
     AstRegExAttribute *attribute = (AstRegExAttribute *) init_name -> getAttribute("type");
     if (attribute) {
-                string exp = attribute->expression;
-                int length = exp.length();
-                if (length > 2 && exp.at(0) == ':' && exp.at(1) == ':') {
-                        exp = exp.substr(2);
-                        replaceString(exp, "::", ".");
-                }
-                length = exp.length();
-                if (length > 2 && exp.at(length-2) == '[' && exp.at(length-1) == ']') {
-                        exp = exp.substr(0, length-2);
-                        exp = "Rail[" + exp + "]";
-                }
+        string exp = attribute->expression;
+        int length = exp.length();
+        if (length > 2 && exp.at(0) == ':' && exp.at(1) == ':') {
+            exp = exp.substr(2);
+            replaceString(exp, "::", ".");
+        }
+        length = exp.length();
+        int array_start = exp.find("[", 0);
+        if (array_start > 0) {
+            string type = exp.substr(0, array_start); 
+            length -= type.length();
+            exp = exp.substr(array_start, length);
+            int num = 0;
+            int index = 0;
+            while ((index+1) < length && exp.at(index) == '[' && exp.at(index+1) == ']') {
+                ++num;
+                index += 2;
+            }
+            exp = type;
+            for (int i = 0; i < num; ++i) {
+                exp = "Rail[" + exp + "]";
+            }
+        }
         curprint(exp);
 //        curprint(attribute -> expression);
     }
@@ -1249,6 +1261,9 @@ Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 	   	    unparseName("this", info);
         else 
             unparseName(mfuncdecl_stmt->get_name(), info);
+
+        // MH-20141121
+        // TODO: add type parameter for methods
         curprint("(");
 
 
@@ -1288,11 +1303,20 @@ Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      // Unparse type, unless this a constructor then unparse name
      //
 //     if (mfuncdecl_stmt -> get_specialFunctionModifier().isConstructor()) {
-     if (isConstructor) {
+    if (isConstructor) {
 //         unparseName(mfuncdecl_stmt -> get_associatedClassDeclaration() -> get_name(), info);
-         curprint(": ");
-         unparseName(mfuncdecl_stmt->get_associatedClassDeclaration()->get_name(), info);
-     }
+        curprint(": ");
+        unparseName(mfuncdecl_stmt->get_associatedClassDeclaration()->get_name(), info);
+
+        // MH-20141121 : Add type parameter
+        SgClassDeclaration *classdecl_stmt = mfuncdecl_stmt->get_associatedClassDeclaration();
+        if (classdecl_stmt -> attributeExists("type_parameters")) {
+            AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) classdecl_stmt -> getAttribute("type_parameters");
+            SgTemplateParameterList *type_list = isSgTemplateParameterList(attribute -> getNode());
+            ROSE_ASSERT(type_list);
+            unparseTypeParameters(type_list, info);
+        }
+    }
      else {
 // TODO: Remove this !
 /*
@@ -1349,6 +1373,14 @@ Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 //         unparseName(mfuncdecl_stmt -> get_associatedClassDeclaration() -> get_name(), info);
          curprint(": ");
          unparseName(mfuncdecl_stmt->get_associatedClassDeclaration()->get_name(), info);
+        // MH-20141121 : Add type parameter
+        SgClassDeclaration *classdecl_stmt = mfuncdecl_stmt->get_associatedClassDeclaration();
+        if (classdecl_stmt -> attributeExists("type_parameters")) {
+            AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) classdecl_stmt -> getAttribute("type_parameters");
+            SgTemplateParameterList *type_list = isSgTemplateParameterList(attribute -> getNode());
+            ROSE_ASSERT(type_list);
+            unparseTypeParameters(type_list, info);
+        }
      }
     else {
 // TODO: Remove this !
@@ -2196,7 +2228,8 @@ Unparse_X10::unparseEnumBody(SgClassDefinition *class_definition, SgUnparse_Info
 
 void 
 Unparse_X10::unparseTypeParameters(SgTemplateParameterList *type_list, SgUnparse_Info& info) {
-    curprint("<");
+//    curprint("<");
+    curprint("[");
     for (size_t i = 0; i < type_list -> get_args().size(); i++) {
         SgClassType *parameter_type = isSgClassType(type_list -> get_args()[i] -> get_type());
         ROSE_ASSERT(parameter_type);
@@ -2273,6 +2306,7 @@ Unparse_X10::unparseTypeParameters(SgTemplateParameterList *type_list, SgUnparse
             curprint(", ");
         }
     }
-    curprint(">");
+//    curprint(">");
+    curprint("]");
 }
 

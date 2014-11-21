@@ -282,10 +282,9 @@ Unparse_X10::unparseEnumType(SgEnumType* type, SgUnparse_Info& info)
 
 void
 Unparse_X10::unparseArrayType(SgArrayType *array_type, SgUnparse_Info& info) {
-        curprint("Rail[");
+    curprint("Rail[");
     unparseType(array_type->get_base_type(), info);
-        curprint("]");
-//    curprint("[]");
+    curprint("]");
 }
 
 void
