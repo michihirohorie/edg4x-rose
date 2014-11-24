@@ -1499,8 +1499,17 @@ Unparse_X10::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info) {
     if (mod.isFinal()) curprint("val ");
     else curprint("var ");
     unparseTypeModifier(mod.get_typeModifier(), info);
-    foreach (SgInitializedName* init_name, vardecl_stmt->get_variables())
-        unparseInitializedName(init_name, info);
+    foreach (SgInitializedName* init_name, vardecl_stmt->get_variables()) {
+        // MH-20141125 : Skips a type declaration when a modifier is "val" and no initializer exists
+        if (mod.isFinal() && init_name->get_initializer() != NULL) {
+            unparseName(init_name -> get_name(), info);
+            curprint(" = ");
+            unparseExpression(init_name->get_initializer(), info);
+        }
+        else {
+            unparseInitializedName(init_name, info);
+        }
+    }
 }
 
 
