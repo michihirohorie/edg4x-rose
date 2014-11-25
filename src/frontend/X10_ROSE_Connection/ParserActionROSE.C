@@ -831,12 +831,14 @@ JNIEXPORT void JNICALL cactionBuildClassSupportEnd(JNIEnv *env, jclass xxx, jstr
     ROSE_ASSERT(class_definition);
 	printStack();
 
-	// MH-20141006
-	cout << "num_class_members=" << num_class_members << endl;
-	cout << "size_of_ComponentStack=" << astX10ComponentStack.size() << endl;
-    for (int i = 0; i < num_class_members; i++) {
+    // MH-20141125 : When unsupported constructs such as the function type are found, they are not 
+    // parsed correctly, and they might not be pushed into the stack. In such cases,
+    // num_class_members is larger than astX10ComponentStack.size() accidentally. Thus, we need to
+    // use a smaller number. 
+    int size = min((int)num_class_members, (int)astX10ComponentStack.size());
+    for (int i = 0; i < size; i++) {
 		// MH-20141006
-		cout << "i=" << i << endl;
+		cout << "i=" << dec << i << endl;
 //        SgDeclarationStatement *declaration = isSgDeclarationStatement(astX10ComponentStack.pop());
 		SgStatement *st = (SgStatement *)astX10ComponentStack.pop();
 		cout << "DECL?=" << st << endl;
@@ -3448,7 +3450,7 @@ JNIEXPORT void JNICALL cactionArgument(JNIEnv *env, jclass, jstring x10_argument
 
 JNIEXPORT void JNICALL cactionCatchArgumentEnd(JNIEnv *env, jclass, jint num_annotations, jstring x10_argument_name, jint num_types, jboolean x10_is_final, jobject x10Token) {
     if (SgProject::get_verbose() > 0)
-        printf ("Build a function argument \n");
+        printf ("Enter cactionCatchArgumentEnd \n");
 
     SgName argument_name = convertJavaStringToCxxString(env, x10_argument_name);
 
@@ -3511,6 +3513,9 @@ JNIEXPORT void JNICALL cactionCatchArgumentEnd(JNIEnv *env, jclass, jint num_ann
 
     catch_option_stmt -> set_condition(variable_declaration);
     variable_declaration -> set_parent(catch_option_stmt);
+
+    if (SgProject::get_verbose() > 0)
+        printf ("Leaving cactionCatchArgumentEnd \n");
 }
 
 
