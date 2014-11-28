@@ -48,7 +48,7 @@ void printCompStack(int num) {
  * For debugging use
  */
 void printStack() {
-    cout << "...in the stack: " << endl;
+    cout << "...in the stack, currentType=" << currentTypeName << endl;
     for (std::list<SgScopeStatement*>::iterator i = astX10ScopeStack.begin(); i != astX10ScopeStack.end(); i++) {
         cout << "    " 
              << (isSgClassDefinition(*i) ? 
@@ -838,7 +838,7 @@ JNIEXPORT void JNICALL cactionBuildClassSupportEnd(JNIEnv *env, jclass xxx, jstr
     int size = min((int)num_class_members, (int)astX10ComponentStack.size());
     for (int i = 0; i < size; i++) {
 		// MH-20141006
-		cout << "i=" << dec << i << endl;
+		cout << "i=" << dec << i << ", size=" << size << ", diff=" << (size - i) << endl;
 //        SgDeclarationStatement *declaration = isSgDeclarationStatement(astX10ComponentStack.pop());
 		SgStatement *st = (SgStatement *)astX10ComponentStack.pop();
 		cout << "DECL?=" << st << endl;
@@ -856,7 +856,6 @@ JNIEXPORT void JNICALL cactionBuildClassSupportEnd(JNIEnv *env, jclass xxx, jstr
 
         class_definition -> prepend_member(declaration);
     }
-
 // TODO: Remove this! 12/09/13
 //    ROSE_ASSERT(astX10ComponentStack.top() == class_definition);
 //    astX10ComponentStack.pop();

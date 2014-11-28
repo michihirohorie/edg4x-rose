@@ -993,14 +993,13 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionPopTypeParameterScope(JNIEn
         cactionPopTypeParameterScope(env, clz, x10Token);
 }
 
-//JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionCompilationUnitList(JNIEnv *env, jclass clz, jint argc, jobjectArray argv) 
-JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionCompilationUnitList(JNIEnv *env, jclass clz, jint size, jobjectArray array) 
+JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionCompilationUnitList(JNIEnv *env, jclass clz, jint argc, jobjectArray argv) 
 { 
 #if 0
         cactionCompilationUnitList(env, clz);
 #else
     if (SgProject::get_verbose() > 0)
-        printf ("Inside of Java_x10rose_visit_JNI_cactionCompilationUnitList \n");
+        printf ("Inside of x10_x10rose_visit_JNI_cactionCompilationUnitList\n");
 
 // MH-20140515 remove this, just trial code
         // suppose that the array size is always 1
@@ -1009,11 +1008,11 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionCompilationUnitList(JNIEnv 
         currentFilePath = (jstring)env->NewGlobalRef(env->GetObjectArrayElement(array, 0));
         SgName filepath = convertJavaStringToCxxString(env, currentFilePath);
 #endif
-
-        astX10ScopeStack = *(new ScopeStack);
-        scopeMap[currentTypeName] = astX10ScopeStack;
-        astX10ComponentStack = *(new ComponentStack);
-        componentMap[currentTypeName] = astX10ComponentStack;
+    currentTypeName = "";
+    astX10ScopeStack = *(new ScopeStack);
+    scopeMap[currentTypeName] = astX10ScopeStack;
+    astX10ComponentStack = *(new ComponentStack);
+    componentMap[currentTypeName] = astX10ComponentStack;
 
     // This is already setup by ROSE as part of basic file initialization before calling ECJ.
 //MH-20140401
@@ -1078,7 +1077,7 @@ cout << "Stored type "
     ROSE_ASSERT(astX10ScopeStack.top() -> get_parent() != NULL);
 
      if (SgProject::get_verbose() > 0)
-        printf ("Leaving Java_x10rose_visit_JNI_cactionCompilationUnitList \n");
+        printf ("Leaving x10_x10rose_visit_JNI_cactionCompilationUnitList \n");
 #endif
 }
 
@@ -1134,7 +1133,8 @@ cout.flush();
     ROSE_ASSERT(package_declaration);
     SgClassDefinition *package_definition = package_declaration -> get_definition();
     ROSE_ASSERT(package_definition);
-    ROSE_ASSERT(! ::currentSourceFile -> get_package());
+    // MH-20141120
+//    ROSE_ASSERT(! ::currentSourceFile -> get_package());
     SgJavaPackageStatement *package_statement = SageBuilder::buildJavaPackageStatement(package_name);
         package_statement -> set_parent(package_definition);    
     setX10SourcePosition(package_statement, env, x10Token);
@@ -1742,7 +1742,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionTypeReference(JNIEnv *env, 
     }
 
     // looks up a user-defined type 
-    if (   type == NULL
+    if (   type == NULL 
         || (type != NULL && type->attributeExists("dummy"))) {
         cout << "Looks up a user-defined type named " << type_name.str() << ", " << type << endl;
         jclass cls = get_class(env, x10Visitor);
@@ -1752,12 +1752,15 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionTypeReference(JNIEnv *env, 
         jboolean isOtherFilesExist = env->CallIntMethod(x10Visitor, method_id);
 
         if (isOtherFilesExist == JNI_TRUE) {
+            // MH-20141127
+            std::string formerType = currentTypeName;
             method_id = get_method(env, cls, "visitDeclarations", "()V");
             env->CallIntMethod(x10Visitor, method_id);
-#if 0
+#if 1
             method_id = get_method(env, cls, "subFileIndex", "()V");
             env->CallIntMethod(x10Visitor, method_id);
 #endif
+            currentTypeName = formerType;
             map<std::string, ScopeStack>::iterator it = scopeMap.find(currentTypeName);
             if (it != scopeMap.end()) {
                 astX10ScopeStack = it->second;
@@ -1775,15 +1778,16 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionTypeReference(JNIEnv *env, 
                 cout << "2 NOT FOUND existing componentMap for " << currentTypeName << endl;
 
             type = lookupTypeByName(package_name, type_name, 0 /* not an array - number of dimensions is 0 */);
+            if (type == NULL) {
+                cout << "User-defined type " << type_name << "was not found" << endl;
+            }
         }
         else {
             cout << "User-defined type " <<  type_name << " was not found" << endl;
-            method_id = get_method(env, cls, "subFileIndex", "()V");
-            env->CallIntMethod(x10Visitor, method_id);
         }
 
         // If type is still NULL, it then looks up a library type
-        if (  type == NULL
+        if (  type == NULL 
            || (type != NULL && type->attributeExists("dummy"))) {
             cout << "Looks up a library type of " << type_name << ", currentTypeName=" << currentTypeName << endl;
 /*
@@ -3870,8 +3874,8 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionSetCurrentClassName (JNIEnv
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionSetCurrentFilePath (JNIEnv *env, jclass clz, jstring file)
 {
-        currentFilePath = (jstring)env->NewGlobalRef(file);
-        string full_file_name = convertJavaStringToCxxString(env, currentFilePath);
+    currentFilePath = (jstring)env->NewGlobalRef(file);
+    string full_file_name = convertJavaStringToCxxString(env, currentFilePath);
     ::currentSourceFile = isSgSourceFile((*::project)[full_file_name]);
 }
 

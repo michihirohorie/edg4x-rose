@@ -191,13 +191,14 @@ SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClass
     SgMemberFunctionDeclaration *method_declaration = NULL;
     vector<SgDeclarationStatement *> declarations = class_definition -> get_members();
     cout << "class_definition=" << class_definition << endl;
-    cout << "size=" << declarations.size() << endl;
+    cout << "size=" << dec << declarations.size() << endl;
     for (int i = 0; i < declarations.size(); i++, method_declaration = NULL) {
         SgDeclarationStatement *declaration = declarations[i];
         cout << "i=" << i << ", decl=" << declaration << endl;
         method_declaration = isSgMemberFunctionDeclaration(declaration);
         if (method_declaration && method_declaration -> get_name().getString().compare(function_name) == 0) {
             vector<SgInitializedName *> args = method_declaration -> get_args();
+            cout << "args.size=" << args.size() << ", num_arg=" << num_arguments << endl;
             if (args.size() == num_arguments) {
 #if 1
                 // MH-20140918
@@ -2626,6 +2627,8 @@ SgClassSymbol *lookupTypeSymbol(SgName &type_name, const SgName &package_name = 
 	std::string formerTypeName = currentTypeName;
     currentTypeName = type_name.str();
     cout << "Former type=" << formerTypeName << ", current type=" << currentTypeName << endl;
+
+    bool isNoStack = false;
     map<std::string, ScopeStack>::iterator it = scopeMap.find(currentTypeName);
     if (it != scopeMap.end()) {
         astX10ScopeStack = it->second;
@@ -2633,6 +2636,7 @@ SgClassSymbol *lookupTypeSymbol(SgName &type_name, const SgName &package_name = 
     }
     else {
         cout << "- NOT FOUND existing scopeMap for " << currentTypeName << endl;
+        isNoStack = true;
         // If a scope stack does not exist, it means the type name had not been traversed yet.
 // MH-20141030
 //        currentTypeName = formerTypeName;
@@ -2647,6 +2651,7 @@ SgClassSymbol *lookupTypeSymbol(SgName &type_name, const SgName &package_name = 
     else {
         // Here cannot be in...
         cout << "- NOT FOUND existing componentMap for " << currentTypeName << endl;
+        isNoStack = true;
 // MH-20141030
 //        currentTypeName = formerTypeName;
 // MH-20141024
@@ -2735,8 +2740,10 @@ return NULL;
 #endif
 
     // MH-20141009
-    scopeMap[currentTypeName] = astX10ScopeStack;
-    componentMap[currentTypeName] = astX10ComponentStack;
+    if ( ! isNoStack) {
+        scopeMap[currentTypeName] = astX10ScopeStack;
+        componentMap[currentTypeName] = astX10ComponentStack;
+    }
     currentTypeName = formerTypeName;
     it = scopeMap.find(currentTypeName);
     if (it != scopeMap.end()) {
