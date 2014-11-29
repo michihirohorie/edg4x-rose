@@ -90,7 +90,9 @@ TESTCODES = \
     Rail3.x10 \
     Rail4.x10 \
     TypeParam0.x10 \
-    TypeParam1.x10 
+    TypeParam1.x10 \
+    Here0.x10 \
+    Here1.x10
 
 # Warning: Use -rose:output to unparse file in build tree, rather
 # than override the original file in the source tree.
