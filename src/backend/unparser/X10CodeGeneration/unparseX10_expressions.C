@@ -742,10 +742,14 @@ void Unparse_X10::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info) {
         if (isConnectionUtil) {
                 SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(func_call->get_function());
                 string funcName = mfunc_ref->get_symbol()->get_name(); 
-                if (funcName == "Rail_size") {
+                if (funcName == "x10_lang_Rail_size") {
                         unparseExpression(func_call->get_args()->get_expressions()[0], info);
                         curprint(".size");
                 }
+                else if (funcName == "x10_lang_Int_MIN_VALUE") {
+                        unparseExpression(func_call->get_args()->get_expressions()[0], info);
+                        curprint(".MIN_VALUE");
+                } 
                 else if (funcName.compare(0, ((string)"x10_lang_Long_parse").length(), "x10_lang_Long_parse") == 0) {
                         curprint("Long.parse(");
                         unparseExpression(func_call->get_args()->get_expressions()[0], info);
@@ -762,12 +766,12 @@ void Unparse_X10::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info) {
 
         if (func_call -> attributeExists("prefix")) {
                 AstRegExAttribute *attribute = (AstRegExAttribute *) func_call->getAttribute("prefix");
-				string expr = attribute->expression;
-				if (expr.compare(0, 2, "::") == 0) {
-					expr = expr.substr(2);
-				}
-				replaceString(expr, "::", ".");
-				curprint(expr);
+                                string expr = attribute->expression;
+                                if (expr.compare(0, 2, "::") == 0) {
+                                        expr = expr.substr(2);
+                                }
+                                replaceString(expr, "::", ".");
+                                curprint(expr);
 //                curprint(attribute -> expression);
                 curprint(".");
         }
@@ -780,9 +784,39 @@ void Unparse_X10::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info) {
 
     if (func_call -> attributeExists("<init>")) {
         AstRegExAttribute *constructor_attribute = (AstRegExAttribute *) func_call -> getAttribute("<init>");
+cout << "1209 init=" << constructor_attribute -> expression<< endl;
         curprint(constructor_attribute -> expression);
     }
-    else unparseExpression(func_call->get_function(), info);
+    else {
+#if 1
+        SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(func_call->get_function());
+        if (mfunc_ref != NULL) {
+            string func_name = mfunc_ref->get_symbol()->get_name();
+            // MH-20141209: Currently, eliminates "operator()"
+            if (func_name == "operator()") {
+            }
+            else {
+                unparseExpression(func_call->get_function(), info);
+            }
+        } 
+        else {
+#endif
+            SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(func_call->get_function());
+            if (mfunc_ref != NULL) {
+                string func_name = mfunc_ref->get_symbol()->get_name();
+                cout << "1209 func_name=" << func_name << endl;
+            }
+            unparseExpression(func_call->get_function(), info);
+#if 1
+        } 
+#endif
+    } 
+    if (func_call -> attributeExists("type-parameter")) {
+        AstRegExAttribute *type_param_attribute = (AstRegExAttribute *) func_call -> getAttribute("type-parameter");
+        curprint("[");  
+        curprint(type_param_attribute -> expression);
+        curprint("]");  
+    }
 
     curprint("(");
     unparseExpression(func_call->get_args(), info);
@@ -940,7 +974,21 @@ Unparse_X10::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
          curprint("Rail[");
          AstRegExAttribute *attribute = (AstRegExAttribute *) new_op -> getAttribute("type");
          if (attribute) {
+#if 1
+            string type_name = attribute -> expression;
+            int index = -1;
+            int dim = 0;
+            while ((index = type_name.find("[]")) != string::npos) {
+                type_name = type_name.substr(0, type_name.length() - 2);
+                curprint("Rail[");
+                ++dim;
+            }
+            curprint(type_name);
+            for (int i = 0; i < dim; ++i) 
+                curprint("]"); 
+#else
              curprint(attribute -> expression);
+#endif
          }
          else {
              SgType *type = new_op -> get_specified_type();
@@ -983,6 +1031,7 @@ Unparse_X10::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
          else {
              unparseType(new_op -> get_specified_type(), info);
          }
+
          curprint ("(");
          ROSE_ASSERT(new_op -> get_constructor_args());
          SgConstructorInitializer *init = new_op -> get_constructor_args();
@@ -1096,6 +1145,7 @@ Unparse_X10::unparseSuperNode(SgExpression* expr, SgUnparse_Info& info) {
 
     ROSE_ASSERT(super_node != NULL);
     curprint ("super"); 
+curprint("<=|");
 }
 
 void
@@ -1132,7 +1182,6 @@ Unparse_X10::unparseTypeRef(SgExpression* expr, SgUnparse_Info& info)
      newinfo.unset_PrintName();
      newinfo.unset_isTypeFirstPart();
      newinfo.unset_isTypeSecondPart();
-  
      unp->u_type->unparseType(type_ref->get_type_name(), newinfo);
    }
 
@@ -1322,6 +1371,8 @@ Unparse_X10::unparseCompoundAssignOp(SgCompoundAssignOp* op,
     }
     unparseExpression(op->get_rhs_operand(), info);
 }
+
+
 void
 Unparse_X10::unparseBinaryOp(SgBinaryOp* op,
                               SgUnparse_Info & info) {
@@ -1329,7 +1380,8 @@ Unparse_X10::unparseBinaryOp(SgBinaryOp* op,
         if (requiresParentheses(op, info)) 
                 curprint("(");
 
-//cout << "BINARY LEFT=" << op->get_lhs_operand()->get_type()->get_mangled().str() << endl;
+cout << "BINARY LEFT=" << op->get_lhs_operand()->get_type()->get_mangled().str() << endl;
+cout << "BINARY RIGHT=" << op->get_rhs_operand()->get_type()->get_mangled().str() << endl;
         unparseExpression(op->get_lhs_operand(), info);
 
     switch (op->variantT()) {
@@ -1340,7 +1392,30 @@ Unparse_X10::unparseBinaryOp(SgBinaryOp* op,
         case V_SgBitOrOp:              curprint(" | ");   break;
         case V_SgBitXorOp:             curprint(" ^ ");   break;
         case V_SgDivideOp:             curprint(" / ");   break;
+#if 1
+        case V_SgDotExp:               
+            {
+            SgExpression *expr2 = op->get_rhs_operand();
+            SgFunctionCallExp* func_call = isSgFunctionCallExp(expr2);
+            if (func_call != NULL) { 
+                SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(func_call->get_function());
+                if (mfunc_ref != NULL) {
+                    string func_name = mfunc_ref->get_symbol()->get_name();
+                    if (func_name == "operator()") {
+                        cout << "1209 OPERATOR" << endl;
+                    }
+                    else
+                       curprint(".");
+                }
+            } 
+            else {
+                curprint(".");     
+            }
+            break; // charles4: There is no Dot operation per se in X10
+           }
+#else
         case V_SgDotExp:               curprint(".");     break; // charles4: There is no Dot operation per se in X10
+#endif
         case V_SgArrowExp:             curprint(".");     break; // charles4: The X10 dot operator is equivalent to the C Arrow operator
         case V_SgDotDotExp:            curprint("..");     break; // MH-20140917
         case V_SgEqualityOp:           curprint(" == ");  break;
@@ -1592,12 +1667,12 @@ Unparse_X10::unparseX10TypeExpression(SgExpression *expr, SgUnparse_Info& info) 
 void
 Unparse_X10::unparseAtExpression(SgExpression *expr, SgUnparse_Info& info) {
     SgAtExp *at = isSgAtExp(expr);
-	curprint("(");
+        curprint("(");
     curprint_indented("at (", info);
     unparseExpression(at->get_expression(), info);
     curprint_indented(") ", info);
     unparseStatement(at->get_body(), info);
-	curprint(")");
+        curprint(")");
 }
 
 void

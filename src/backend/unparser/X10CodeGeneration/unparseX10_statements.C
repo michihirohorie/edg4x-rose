@@ -89,6 +89,7 @@ cout.flush();
 
     SgJavaPackageStatement *package_statement = sourcefile -> get_package();
 // TODO: Remove this !
+cout << "*** @ unparseX10File on " << sourcefile -> getFileName() << endl;
 /*
 cout << "*** @ unparseX10File on " << sourcefile -> getFileName()
 << endl;
@@ -140,6 +141,11 @@ cout.flush();
     //
     if (sourcefile -> get_class_list()) {
         vector<SgClassDeclaration *> &type_list = sourcefile -> get_class_list() -> get_java_class_list();
+// MH-20141201
+        for (int i = 0; i < type_list.size(); i++) {
+            SgClassDeclaration *type_declaration = type_list[i];
+cout << "1201 i=" << i << ", sourcefile=" << sourcefile << ", type=" << type_declaration -> get_qualified_name().str()<< endl;
+        }
         for (int i = 0; i < type_list.size(); i++) {
             SgClassDeclaration *type_declaration = type_list[i];
 // TODO: Remove this !
@@ -147,12 +153,16 @@ cout.flush();
 cout << "*** @ type " << i << ": " << type_declaration -> get_qualified_name().str() << endl;
 cout.flush();
 AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) type_declaration -> getAttribute("sourcefile");
+// MH-20141201
+cout << "1201 attribute=" << attribute << " for " << sourcefile << ", type=" << type_declaration -> get_qualified_name().str()<< endl;
 ROSE_ASSERT(isSgSourceFile(attribute -> getNode()));
-ROSE_ASSERT(attribute -> getNode() == sourcefile);
+//ROSE_ASSERT(attribute -> getNode() == sourcefile);
 /*
 */
 
+cout << "1205-A:" << type_declaration << endl;
             unparseStatement(type_declaration, info);
+cout << "1205-B" << endl;
         }
     }
 // TODO: Remove this !
@@ -162,6 +172,7 @@ cout << "*** @ No types" << endl;
 cout.flush();
 }
 */
+cout << "1205-C" << endl;
 }
 
 //-----------------------------------------------------------------------------------
@@ -311,10 +322,10 @@ cout.flush();
                                 }
                                 else if (stmt->sage_class_name() == "SgAtStmt") {
                                     SgAtStmt *at = (SgAtStmt *) stmt;
-                                	curprint_indented("at (", info);
-                                	unparseExpression(at->get_expression(), info);
-                                	curprint_indented(") ", info);
-                                	unparseStatement(at->get_body(), info);
+                                        curprint_indented("at (", info);
+                                        unparseExpression(at->get_expression(), info);
+                                        curprint_indented(") ", info);
+                                        unparseStatement(at->get_body(), info);
                                 }
                                 // MH-20140716 comment out until unparseFinishStmt etc. is implemented
 //               ROSE_ASSERT(false);
@@ -822,7 +833,7 @@ void Unparse_X10::unparseForEachStmt(SgStatement* stmt, SgUnparse_Info& info) {
 
     ROSE_ASSERT(foreach_stmt -> get_element()->get_variables().size() == 1);
 //    unparseVarDeclStmt(foreach_stmt -> get_element(), info);
-	curprint (foreach_stmt->get_element()-> get_variables()[0]->get_name().str());
+        curprint (foreach_stmt->get_element()-> get_variables()[0]->get_name().str());
 
     curprint(" in ");
     unparseExpression(foreach_stmt -> get_collection(), info);
@@ -930,6 +941,15 @@ cout.flush();
         }
         curprint(exp);
 //        curprint(attribute -> expression);
+
+        SgType *type2 = init_name -> get_type();
+        if (type2 -> attributeExists("type-parameter")) {
+            AstRegExAttribute *attr = (AstRegExAttribute *) type2 -> getAttribute("type-parameter");
+            size_t found = exp.find(attr -> expression);
+            if (found == string::npos) {
+                curprint(attr->expression);
+            }
+        }
     }
     else if (init_name -> attributeExists("var_args")) {
         SgArrayType *array_type = isSgArrayType(init_name -> get_type());
@@ -1256,14 +1276,38 @@ Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      }
 #endif
 
+       bool hasTypeParameter = false;
         curprint(" ");
         if (isConstructor)
-	   	    unparseName("this", info);
-        else 
+                    unparseName("this", info);
+        else {
             unparseName(mfuncdecl_stmt->get_name(), info);
+        }
 
         // MH-20141121
-        // TODO: add type parameter for methods
+        if (mfuncdecl_stmt -> attributeExists("type-parameter")) {
+            curprint("[");
+#if 1
+            AstRegExAttribute *type_parameter_attribute = (AstRegExAttribute *) mfuncdecl_stmt -> getAttribute("type-parameter");
+            string ret_type = mfuncdecl_stmt->get_name().str();
+            size_t found = ret_type.find(type_parameter_attribute -> expression);
+            if (found == string::npos) {
+                curprint(type_parameter_attribute -> expression);
+            }
+#else 
+            AstSgNodeListAttribute *type_parameter_attribute = (AstSgNodeListAttribute *) mfuncdecl_stmt -> getAttribute("type-parameter");
+            if (type_parameter_attribute != NULL) {
+                std::vector<SgNode *> &type_list = type_parameter_attribute -> getNodeList();
+                for (int k = 0; k < type_list.size(); k++) {
+                    if (0 < k)
+                       curprint(", "); 
+                    SgName *type_parameter_name = (SgName *) type_list[k];
+                    curprint(type_parameter_name -> getString());
+                }
+            }
+#endif
+            curprint("]");
+        }
         curprint("(");
 
 
@@ -1298,6 +1342,8 @@ Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      AstRegExAttribute *exception_attribute = (AstRegExAttribute *) mfuncdecl_stmt -> getAttribute("exception");
      if (mfuncdecl_stmt -> get_declarationModifier().isJavaAbstract() || mfuncdecl_stmt -> get_functionModifier().isJavaNative()) {
          curprint(")");
+
+
 #if 1
      //
      // Unparse type, unless this a constructor then unparse name
@@ -1328,8 +1374,8 @@ Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
          if (attribute) {
              if (attribute -> expression != "void") {
                  curprint(": ");
-			 	 string exp = attribute->expression;
-            	 if (exp.length() > 2 && exp.at(0) == ':' && exp.at(1) == ':') {
+                                 string exp = attribute->expression;
+                 if (exp.length() > 2 && exp.at(0) == ':' && exp.at(1) == ':') {
                      exp = exp.substr(2);
                      replaceString(exp, "::", ".");
                  }
@@ -1340,7 +1386,7 @@ Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
               if (mfuncdecl_stmt -> get_type() -> get_return_type() -> get_mangled().getString() != "void") {
                   curprint(": ");
                   string exp = mfuncdecl_stmt -> get_type() -> get_return_type()-> get_mangled().getString() ;
-            	  if (exp.length() > 2 && exp.at(0) == ':' && exp.at(1) == ':') {
+                  if (exp.length() > 2 && exp.at(0) == ':' && exp.at(1) == ':') {
                       exp = exp.substr(2);
                       replaceString(exp, "::", ".");
                   }
@@ -1363,6 +1409,15 @@ Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      }
      else {
          curprint(") ");
+
+     // MH-20141204 : add guard
+    if (mfuncdecl_stmt -> attributeExists("guard")) {
+        curprint("{");
+        AstRegExAttribute *guard_attribute = (AstRegExAttribute *) mfuncdecl_stmt -> getAttribute("guard");
+        curprint(guard_attribute -> expression);
+        curprint("} ");
+    }
+
 #if 1
  //        curprint(": ");
      //
@@ -1396,14 +1451,28 @@ Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                 curprint(": ");
 #if 0
 //              curprint(attribute -> expression);
-			    string exp = attribute->expression;
-            	if (exp.length() > 2 && exp.at(0) == ':' && exp.at(1) == ':') {
+                            string exp = attribute->expression;
+                if (exp.length() > 2 && exp.at(0) == ':' && exp.at(1) == ':') {
                     exp = exp.substr(2);
                     replaceString(exp, "::", ".");
                 }
                 curprint(exp);
 #endif
                 unparseType(mfuncdecl_stmt->get_type()->get_return_type(), info);
+
+                // MH-20141205
+                SgType *type = mfuncdecl_stmt -> get_type() -> get_return_type(); 
+                if (type -> attributeExists("type-parameter")) {
+                    AstRegExAttribute *type_param_attribute = (AstRegExAttribute *) mfuncdecl_stmt -> getAttribute("type-parameter");
+                    string typeParam = type_param_attribute -> expression;
+                    string ret_type = mfuncdecl_stmt->get_type()->get_return_type()->get_mangled().getString();
+                    size_t found = ret_type.find(typeParam);
+                    if (found == string::npos) {
+                        curprint("[");
+                        curprint(typeParam);
+                        curprint("]");
+                    }
+                }
             } 
         }
         else {
@@ -1418,6 +1487,24 @@ Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                 }
 //                  unparseType(mfuncdecl_stmt -> get_type() -> get_return_type(), info);
                 curprint(exp);
+            }
+            // MH-20141205
+            SgType *type = mfuncdecl_stmt -> get_type() -> get_return_type(); 
+            if (type -> attributeExists("type-parameter")) {
+                AstRegExAttribute *type_param_attribute = (AstRegExAttribute *) mfuncdecl_stmt -> getAttribute("type-parameter");
+                string typeParam = type_param_attribute -> expression;
+                string ret_type = mfuncdecl_stmt->get_type()->get_return_type()->get_mangled().getString();
+                size_t found = ret_type.find(typeParam);
+                if (found == string::npos) {
+                    curprint("[");
+                    curprint(typeParam);
+                    curprint("]");
+                }
+#if 0
+                    curprint("[");
+                    curprint(typeParam);
+                    curprint("]");
+#endif
             }
         }
         curprint(" ");
@@ -1463,8 +1550,15 @@ Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                 curprint_indented ("}", info);
             }
         }       
-        if (!existArg)
+#if 1
+        if (isConstructor && !classdef_stmt -> attributeExists("properties")) { 
+            unparseBasicBlockStmtWithoutBrace(function_definition -> get_body(), info);
+        }
+        else if (!existArg)
             unparseBasicBlockStmt(function_definition -> get_body(), info);
+#else
+        if (!existArg)
+#endif
      }
         
         if (!isUnparse)
@@ -1615,7 +1709,6 @@ cout.flush();
 // MH-20141014
 cout << "Class decl=" << classdecl_stmt -> get_name().str() << ", " << classdecl_stmt -> get_qualified_name().str() << endl;
      unparseName(classdecl_stmt -> get_name(), info);
-
      if (classdecl_stmt -> attributeExists("type_parameters")) {
          AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) classdecl_stmt -> getAttribute("type_parameters");
          SgTemplateParameterList *type_list = isSgTemplateParameterList(attribute -> getNode());
@@ -1654,7 +1747,6 @@ cout << "Class decl=" << classdecl_stmt -> get_name().str() << ", " << classdecl
          curprint(") ");
      }
 #endif
-
 
      SgBaseClassPtrList& bases = class_def -> get_inheritances();
 

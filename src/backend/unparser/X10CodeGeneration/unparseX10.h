@@ -56,7 +56,7 @@ class Unparse_X10 : public UnparseLanguageIndependentConstructs
        // DQ (9/6/2010): Mark the derived class to support debugging.
           virtual std::string languageName() const { return "X10 Unparser"; }
 
-	 	  virtual void unparseStatementNumbers ( SgStatement* stmt, SgUnparse_Info& info );
+                  virtual void unparseStatementNumbers ( SgStatement* stmt, SgUnparse_Info& info );
 
           virtual void unparseUnaryOperator           (SgExpression* expr, const char* op, SgUnparse_Info& info);
           virtual void unparseAssnExpr                (SgExpression* expr, SgUnparse_Info& info);   
