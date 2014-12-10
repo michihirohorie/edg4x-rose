@@ -9,6 +9,9 @@ extern SgSourceFile *currentSourceFile;
 extern SgClassDefinition *ObjectClassDefinition;
 extern jstring currentFilePath;
 extern std::string currentTypeName;
+extern SgClassDefinition *currentClassDefinition;
+
+extern SgClassDefinition *default_package_definition; 
 
 // Control output from Fortran parser
 #define DEBUG_X10_SUPPORT true
@@ -135,6 +138,9 @@ public:
         else if (! isSgStatement(n)) {
             std::cerr << "Invalid attempt to pop a node of type "
                       << n -> class_name()
+                      << "("
+                      << n
+                      << ")"
                       << " as an SgStatement"
                       << std::endl;
             ROSE_ASSERT(false);

@@ -149,7 +149,7 @@ createDummyClass(JNIEnv *env, jclass clz, jstring x10_package_name, jstring x10_
         cout << "Error" << endl;
     }
 #endif
-    cout << "1 " << type_name  << "(" << unknown << ") isSgType?=" << isSgType(unknown) << ", " << !isSgType(unknown) << endl;
+    cout << "Dummy class for " << type_name  << "(" << unknown << ") created" << endl;
     return unknown;
 #else
     SgClassDefinition *class_definition = class_declaration -> get_definition();
@@ -248,18 +248,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionInsertClassEnd(JNIEnv *env,
     cout << "get_file_info() 2 =" << class_definition -> get_file_info() -> get_physical_filename().c_str() << endl;
 
 //MH-20140620
-cout << "...in the stack: " << endl;
-for (std::list<SgScopeStatement*>::iterator i = astX10ScopeStack.begin(); i != astX10ScopeStack.end(); i++) {
-cout << "    "
-<< (isSgClassDefinition(*i) ? isSgClassDefinition(*i) -> get_qualified_name().getString()
-                            : isSgFunctionDefinition(*i) ? (isSgFunctionDefinition(*i) -> get_declaration() -> get_name().getString() + "(...)")
-                                                         : (*i) -> class_name())
-<< " ("
-<< ((unsigned long) (*i))
-<< ")"
-<< endl;
-cout.flush();
-}
+printStack();
 #endif
 }
 
@@ -287,8 +276,8 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBuildClassSupportStart(JNIE
     SgScopeStatement *outerScope = astX10ScopeStack.top();
     ROSE_ASSERT(outerScope != NULL);
 
-	//MH-20140620
-	printStack();
+        //MH-20140620
+        printStack();
 
     SgClassSymbol *class_symbol = outerScope -> lookup_class_symbol(name);
 cout << "name=" << name << ", class_symbol=" << class_symbol << ", outerscope=" << outerScope << endl;
@@ -301,10 +290,10 @@ cout << "name=" << name << ", class_symbol=" << class_symbol << ", outerscope=" 
     //MH-20140925
     AstSgNodeListAttribute *extension_names_attribute = (AstSgNodeListAttribute *) class_definition -> getAttribute("extensions");
     ROSE_ASSERT(extension_names_attribute);
-    cout << "cactionBuildClassSupportStart: extension_name_attr=" << extension_names_attribute << ", class_declaration=" << class_definition->get_declaration() << ", class_definition=" << class_definition <<", name=" << class_definition -> get_qualified_name()  <<   endl;
+//    cout << "cactionBuildClassSupportStart: extension_name_attr=" << extension_names_attribute << ", class_declaration=" << class_definition->get_declaration() << ", class_definition=" << class_definition <<", name=" << class_definition -> get_qualified_name()  <<   endl;
 
-	//MH-20140620
-	printStack();
+        //MH-20140620
+        printStack();
 
     declaration -> set_explicit_interface(is_interface); // Identify whether or not this is an interface.
     declaration -> set_explicit_enum(is_enum);           // Identify whether or not this is an enum.
@@ -342,8 +331,8 @@ cout << "Set attribute for class_definition=" << class_definition << endl;
 // MH-20140929
 //    astX10ScopeStack.push(class_definition);
 
-	// MH-20140929
-	printStack();
+        // MH-20140929
+        printStack();
 
     if (SgProject::get_verbose() > 0)
         printf ("Exiting cactionBuildClassSupportStart(): %s %s \n", (is_interface ? "interface" : "class"), name.str());
@@ -421,22 +410,22 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBuildClassSupportEnd(JNIEnv
         }
 #if 0   // MH-20141002 : set 0
         else if (str == "SgClassDeclaration") {
-		    SgDeclarationStatement *cd = (SgDeclarationStatement *)statement;
+                    SgDeclarationStatement *cd = (SgDeclarationStatement *)statement;
             if (SgProject::get_verbose() > 2) {
-		        cerr << "(1) Adding declaration "
+                        cerr << "(1) Adding declaration "
                 << cd -> class_name()
                 << " to class "
                 << name.getString()
                 << endl;
-            }	
-        	class_definition -> prepend_member(cd);
-			astX10ScopeStack.push(class_definition);
+            }   
+                class_definition -> prepend_member(cd);
+                        astX10ScopeStack.push(class_definition);
 
             if (astX10ComponentStack.size() == 0)
                 break;
 
-			continue;
-		}
+                        continue;
+                }
 #endif
                 
         if (SgProject::get_verbose() > 2) {
@@ -478,14 +467,14 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBuildClassSupportEnd(JNIEnv
         ::globalScope -> append_statement(class_declaration);
     }
 
-	// MH-20140929
-	ScopeStack temp = *(new ScopeStack);
-	for (std::list<SgScopeStatement*>::iterator i = astX10ScopeStack.begin(); i != astX10ScopeStack.end(); i++) {
-		if (isSgClassDefinition(*i)) {
-			
-		}
-	}
-	delete &temp;
+        // MH-20140929
+        ScopeStack temp = *(new ScopeStack);
+        for (std::list<SgScopeStatement*>::iterator i = astX10ScopeStack.begin(); i != astX10ScopeStack.end(); i++) {
+                if (isSgClassDefinition(*i)) {
+                        
+                }
+        }
+        delete &temp;
 
     if (SgProject::get_verbose() > 0)
         printf ("Leaving cactionBuildClassSupportEnd: %s \n", name.str());
@@ -601,7 +590,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBuildMethodSupportStart(JNI
     if (method_index >= 0) {
         AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) class_definition -> getAttribute("type_parameter_space");
 // MH-20140624
-cout << "1 class_definition=" << class_definition <<", className=" << class_definition -> get_qualified_name() << ", attribute=" << attribute << ", name=" << name << ", method_index=" << method_index << endl;
+//cout << "1 class_definition=" << class_definition << ", class_declaration=" << class_definition -> get_declaration() << ", className=" << class_definition -> get_qualified_name() << ", attribute=" << attribute << ", name=" << name << ", method_index=" << method_index << endl;
         ROSE_ASSERT(attribute);
         attribute -> setNode(type_space, method_index);
     }
@@ -673,30 +662,45 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBuildArgumentSupport(JNIEnv
     if (is_final) {
         initialized_name -> setAttribute("final", new AstRegExAttribute(""));
     }
+cout << "bar01" << endl;
     //
     // Identify Arguments with var arguments.
     //
     if (is_var_args) {
+cout << "bar02" << endl;
         SgPointerType *array_type = isSgPointerType(argument_type);
+cout << "bar03" << endl;
         ROSE_ASSERT(array_type);
+cout << "bar04" << endl;
         SgType *element_type = array_type -> get_base_type();
+cout << "bar05" << endl;
 
         initialized_name -> setAttribute("var_args", new AstSgNodeAttribute(element_type));
+cout << "bar06" << endl;
         initialized_name -> setAttribute("type", new AstRegExAttribute(getTypeName(element_type) + "..."));
+cout << "bar07" << endl;
+    } 
+    else {
+cout << "bar08" << endl;
+cout << "bar088:" << argument_type << endl;
+cout << "bar0888:" << getTypeName(argument_type) << endl;
+        initialized_name -> setAttribute("type", new AstRegExAttribute(getTypeName(argument_type)));
+cout << "bar09" << endl;
     }
-    else initialized_name -> setAttribute("type", new AstRegExAttribute(getTypeName(argument_type)));
 
 // TODO: Remove this !!!
 //    initialized_name -> set_scope(method_definition);
 //    method_definition -> insert_symbol(argument_name, new SgVariableSymbol(initialized_name));
 
     astX10ComponentStack.push(initialized_name);
+cout << "bar03" << endl;
 
 // TODO: Remove this!
 cout << "Pushed " << initialized_name->get_name() << ", " << initialized_name -> class_name() <</* ", " << initialized_name->search_for_symbol_from_symbol_table() <<*/ endl; cout.flush();
 
     if (SgProject::get_verbose() > 0)
         printf ("Exiting Build argument support\n");
+cout << "bar04" << endl;
 
 #endif
 }
@@ -1111,18 +1115,8 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionCompilationUnitDeclaration(
          printf ("Inside of Java_x10rose_visit_JNI_cactionCompilationUnitDeclaration() \n");
 
 //MH-20140620
-cout << "...in the stack: " << endl;
-for (std::list<SgScopeStatement*>::iterator i = astX10ScopeStack.begin(); i != astX10ScopeStack.end(); i++) {
-cout << "    "
-<< (isSgClassDefinition(*i) ? isSgClassDefinition(*i) -> get_qualified_name().getString()
-                            : isSgFunctionDefinition(*i) ? (isSgFunctionDefinition(*i) -> get_declaration() -> get_name().getString() + "(...)")
-                                                         : (*i) -> class_name())
-<< " ("
-<< ((unsigned long) (*i))
-<< ")"
-<< endl;
-cout.flush();
-}
+printStack();
+
         string full_file_name = convertJavaStringToCxxString(env, x10_full_file_name);
         ROSE_ASSERT(::currentSourceFile == isSgSourceFile((*::project)[full_file_name]));
 
@@ -1301,45 +1295,19 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionTypeDeclarationEnd(JNIEnv *
             cout << "y NOT FOUND existing componentMap for " << currentTypeName << ", astX10ComponentStack=" << &astX10ComponentStack << endl;
         }
 
-//MH-20140701
-/*
-cout << "...in the stack at cactionTypeDeclarationEnd1 : " << endl;
-for (std::list<SgScopeStatement*>::iterator i = astX10ScopeStack.begin(); i != astX10ScopeStack.end(); i++) {
-cout << "    "
-<< (isSgClassDefinition(*i) ? isSgClassDefinition(*i) -> get_qualified_name().getString()
-                            : isSgFunctionDefinition(*i) ? (isSgFunctionDefinition(*i) -> get_declaration() -> get_name().getString() + "(...)")
-                                                         : (*i) -> class_name())
-<< " ("
-<< ((unsigned long) (*i))
-<< ")"
-<< endl;
-cout.flush();
-}
-*/
-        
     ROSE_ASSERT(astX10ScopeStack.top() != NULL);
     SgClassDefinition *class_definition = astX10ScopeStack.popClassDefinition(); // pop the class definition
     ROSE_ASSERT(class_definition);
 
     SgScopeStatement *type_space = isSgScopeStatement(astX10ScopeStack.pop());  // Pop the type parameters scope from the stack.
     ROSE_ASSERT(type_space);
+    cout << "currentTypeName=" << currentTypeName << endl;
 
     SgClassDeclaration *class_declaration = isSgClassDeclaration(class_definition -> get_declaration() -> get_definingDeclaration());
     ROSE_ASSERT(class_declaration != NULL);
 
 //MH-20140701
-cout << "...in the stack at cactionTypeDeclarationEnd2 : " << endl;
-for (std::list<SgScopeStatement*>::iterator i = astX10ScopeStack.begin(); i != astX10ScopeStack.end(); i++) {
-cout << "    "
-<< (isSgClassDefinition(*i) ? isSgClassDefinition(*i) -> get_qualified_name().getString()
-                            : isSgFunctionDefinition(*i) ? (isSgFunctionDefinition(*i) -> get_declaration() -> get_name().getString() + "(...)")
-                                                         : (*i) -> class_name())
-<< " ("
-<< ((unsigned long) (*i))
-<< ")"
-<< endl;
-cout.flush();
-}
+printStack();
 /*
     ROSE_ASSERT(class_definition == astX10ComponentStack.top());
     astX10ComponentStack.pop(); // remove the class definition from the stack
@@ -1366,8 +1334,9 @@ cout.flush();
     for (int i = 0; i < type_list.size(); i++) {
         SgClassDeclaration *type_declaration = type_list[i];
 // MH-20141009
-              cout << "SET PARENT of " << type_declaration << endl;
-                type_declaration->set_parent(class_list);
+              cout << "SET PARENT of " << type_declaration << ", class_list=" << class_list << ", isSgStatement?=" << isSgStatement(class_list)<<endl;
+// MH-20141202
+//                type_declaration->set_parent(class_list);
         }
 
 #endif
@@ -1439,18 +1408,7 @@ cout.flush();
     }
 
 //MH-20140620
-cout << "...in the stack: " << endl;
-for (std::list<SgScopeStatement*>::iterator i = astX10ScopeStack.begin(); i != astX10ScopeStack.end(); i++) {
-cout << "    "
-<< (isSgClassDefinition(*i) ? isSgClassDefinition(*i) -> get_qualified_name().getString()
-                            : isSgFunctionDefinition(*i) ? (isSgFunctionDefinition(*i) -> get_declaration() -> get_name().getString() + "(...)")
-                                                         : (*i) -> class_name())
-<< " ("
-<< ((unsigned long) (*i))
-<< ")"
-<< endl;
-cout.flush();
-}
+printStack();
 
         if (is_user_defined == JNI_TRUE) {
                 string replaced = class_declaration -> get_qualified_name();
@@ -1529,20 +1487,20 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionMethodDeclaration(JNIEnv *e
     ROSE_ASSERT(class_definition != NULL  && (! class_definition -> attributeExists("namespace")));
     AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) class_definition -> getAttribute("type_parameter_space");
 // MH-20140624
-cout << "2 class_definition=" << class_definition << ", className=" << class_definition -> get_qualified_name() << ", attribute=" << attribute << ", name=" << name << ", method_index=" << method_index <<endl;
+//cout << "2 class_definition=" << class_definition << ", class_declaration=" << class_definition -> get_declaration() << ", className=" << class_definition -> get_qualified_name() << ", attribute=" << attribute << ", name=" << name << ", method_index=" << method_index <<endl;
 // MH-20140928
 #if 0
-	bool shouldPush = 0;
-	SgClassDefinition *class_definition_super;
-	if (!attribute) {
-		astX10ScopeStack.pop();
-		SgClassDefinition *class_definition_super = isSgClassDefinition(astX10ScopeStack.pop());
-		while (!isSgClassDefinition(astX10ScopeStack.top())) {
-			astX10ScopeStack.pop();	
-		}
-		class_definition = () astX10ScopeStack.top();
-		shouldPush = 1;
-	}
+        bool shouldPush = 0;
+        SgClassDefinition *class_definition_super;
+        if (!attribute) {
+                astX10ScopeStack.pop();
+                SgClassDefinition *class_definition_super = isSgClassDefinition(astX10ScopeStack.pop());
+                while (!isSgClassDefinition(astX10ScopeStack.top())) {
+                        astX10ScopeStack.pop(); 
+                }
+                class_definition = () astX10ScopeStack.top();
+                shouldPush = 1;
+        }
 #endif
     ROSE_ASSERT(attribute);
     SgScopeStatement *type_space = isSgScopeStatement(attribute -> getNode(method_index));
@@ -1550,11 +1508,20 @@ cout << "2 class_definition=" << class_definition << ", className=" << class_def
     attribute = (AstSgNodeListAttribute *) class_definition -> getAttribute("class_members");
     ROSE_ASSERT(attribute);
     SgFunctionDefinition *method_definition = isSgFunctionDefinition(attribute -> getNode(method_index));
+    cout << "1210 index="<< method_index << ", method_def=" << method_definition << endl;
     ROSE_ASSERT(method_definition);
     SgMemberFunctionDeclaration *method_declaration = isSgMemberFunctionDeclaration(method_definition -> get_declaration());
     ROSE_ASSERT(method_declaration);
     ROSE_ASSERT(method_declaration -> get_type());
     ROSE_ASSERT(method_declaration -> get_type() -> get_return_type());
+    // MH-20141205
+    SgType *type = method_declaration -> get_type();
+    string type_param = "";
+    if (type -> attributeExists("type-parameter")) {
+        AstRegExAttribute *type_param_attribute = (AstRegExAttribute *) type -> getAttribute("type-parameter");
+        type_param = type_param_attribute -> expression;
+    }
+    method_declaration -> setAttribute("type", new AstRegExAttribute(getTypeName(method_declaration -> get_type() -> get_return_type()) + type_param));
     method_declaration -> setAttribute("type", new AstRegExAttribute(getTypeName(method_declaration -> get_type() -> get_return_type())));
 //MH-20140704
 //cout << "MODIFIER=" << method_declaration->get_declarationModifier().get_accessModifier().isPublic() << endl;
@@ -1719,13 +1686,13 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionTypeReference(JNIEnv *env, 
     cout << "package=" << package_name << ", type=" << type_name;
     printCompStack(5);
     SgType *type = lookupTypeByName(package_name, type_name, 0 /* not an array - number of dimensions is 0 */);
-	cout << "currentTypeName=" << currentTypeName << endl;
+        cout << "currentTypeName=" << currentTypeName << endl;
     printStack();
     cout << "package=" << package_name << ", type=" << type_name;
     printCompStack(6);
 
-	if (type != NULL && type->attributeExists("dummy")) {
-        cout << "DUMMY class found:" << type_name << endl;
+        if (type != NULL && type->attributeExists("dummy")) {
+        cout << "Dummy class found:" << type_name << "(" << type << ")" << endl;
         type = NULL;
 #if 0
         map<std::string, ScopeStack>::iterator it = scopeMap.find(type_name);
@@ -1753,15 +1720,23 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionTypeReference(JNIEnv *env, 
         jmethodID method_id = get_method(env, cls, "addFileIndex", "()Z");
         jboolean isOtherFilesExist = env->CallIntMethod(x10Visitor, method_id);
 
+#if 0
         if (isOtherFilesExist == JNI_TRUE) {
+#else
+        int counter = 0; // alredy fileindex is added by one
+        while (isOtherFilesExist == JNI_TRUE) {
+            ++counter;
+#endif
             // MH-20141127
             std::string formerType = currentTypeName;
             method_id = get_method(env, cls, "visitDeclarations", "()V");
             env->CallIntMethod(x10Visitor, method_id);
-#if 1
+
+#if 0
             method_id = get_method(env, cls, "subFileIndex", "()V");
             env->CallIntMethod(x10Visitor, method_id);
 #endif
+
             currentTypeName = formerType;
             map<std::string, ScopeStack>::iterator it = scopeMap.find(currentTypeName);
             if (it != scopeMap.end()) {
@@ -1780,13 +1755,20 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionTypeReference(JNIEnv *env, 
                 cout << "2 NOT FOUND existing componentMap for " << currentTypeName << endl;
 
             type = lookupTypeByName(package_name, type_name, 0 /* not an array - number of dimensions is 0 */);
-            if (type == NULL) {
-                cout << "User-defined type " << type_name << "was not found" << endl;
-            }
+            if (type != NULL) 
+                break;
+
+            isOtherFilesExist = env->CallIntMethod(x10Visitor, method_id);
         }
+        method_id = get_method(env, cls, "subFileIndex", "()V");
+        for (int i = 0; i < counter; ++i) {
+            env->CallIntMethod(x10Visitor, method_id);
+        }
+#if 0
         else {
             cout << "User-defined type " <<  type_name << " was not found" << endl;
         }
+#endif
 
         // If type is still NULL, it then looks up a library type
         if (  type == NULL 
@@ -1844,7 +1826,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionTypeReference(JNIEnv *env, 
     ROSE_ASSERT(type != NULL);
 #else
 
-	// Finally create a dummy class
+        // Finally create a dummy class
     if (!type) {
         cout << "type=" << type_name;
         printCompStack(6);
@@ -2027,28 +2009,28 @@ cout.flush();
     SgFunctionDefinition *defin = decl->get_definition();
     cout << "33Get decl=" << decl << ", defin="<< defin << endl;
 
-	if (!function_symbol) {
-		SgVariableSymbol *variable_symbol = lookupVariableByName(env, function_name);
-   		if (variable_symbol) {
-  			SgVarRefExp *varRefExp = SageBuilder::buildVarRefExp(variable_symbol);
-			function_symbol = (SgMemberFunctionSymbol *)variable_symbol;
-   		 	SgExprListExp *arguments = new SgExprListExp();
-   		 	for (int i = 0; i < numArguments; i++) { // reverse the arguments' order
-   	    		SgExpression *expr = astX10ComponentStack.popExpression();
-   		     	arguments -> prepend_expression(expr);
-   		 	}
-	   	 	setX10SourcePosition(arguments, env, x10Token);
+        if (!function_symbol) {
+                SgVariableSymbol *variable_symbol = lookupVariableByName(env, function_name);
+                if (variable_symbol) {
+                        SgVarRefExp *varRefExp = SageBuilder::buildVarRefExp(variable_symbol);
+                        function_symbol = (SgMemberFunctionSymbol *)variable_symbol;
+                        SgExprListExp *arguments = new SgExprListExp();
+                        for (int i = 0; i < numArguments; i++) { // reverse the arguments' order
+                        SgExpression *expr = astX10ComponentStack.popExpression();
+                        arguments -> prepend_expression(expr);
+                        }
+                        setX10SourcePosition(arguments, env, x10Token);
 
-			// Pop an unnecessary node (function name?)
-			astX10ComponentStack.pop();
+                        // Pop an unnecessary node (function name?)
+                        astX10ComponentStack.pop();
 
-   	 		SgFunctionCallExp *function_call_exp = SageBuilder::buildFunctionCallExp(function_symbol, arguments);
-   		 	setX10SourcePosition(function_call_exp, env, x10Token);
+                        SgFunctionCallExp *function_call_exp = SageBuilder::buildFunctionCallExp(function_symbol, arguments);
+                        setX10SourcePosition(function_call_exp, env, x10Token);
 
-    		astX10ComponentStack.push(function_call_exp);
-			return;
-		}
-	}
+                astX10ComponentStack.push(function_call_exp);
+                        return;
+                }
+        }
 #else
     // MH : For lazy lookup, but not finish the mechanism for going up to lookup the exact function defined along the class hierarchy
     SgMemberFunctionSymbol *function_symbol = findFunctionSymbolInClass(targetClassScope, function_name, function_parameter_types, env, x10Visitor);
@@ -2080,9 +2062,13 @@ cout.flush();
 
     SgFunctionCallExp *function_call_exp = SageBuilder::buildFunctionCallExp(function_symbol, arguments);
     // MH-20141023
-    cout << "4Get functioncall=" << function_call_exp << endl;
-    cout << "44Get function_sym=" << function_symbol << endl;
+    cout << "Get functioncall=" << function_call_exp << endl;
+    cout << "Get function_sym=" << function_symbol << endl;
     setX10SourcePosition(function_call_exp, env, x10Token);
+
+// MH-20141208 : Type arguments should not be handled here! Invoking "popType()" causes misordering
+//                 of the astX10ComponentStack.
+#if 0
     if (numTypeArguments > 0) {
         string parm_names = "";
         AstSgNodeListAttribute *attribute = new AstSgNodeListAttribute();
@@ -2098,6 +2084,7 @@ cout.flush();
         function_call_exp -> setAttribute("invocation_parameter_types", attribute);
         function_call_exp -> setAttribute("function_parameter_types", new AstRegExAttribute(parm_names));
     }
+#endif
 
     SgExpression *exprForFunction = function_call_exp;
 
@@ -2139,8 +2126,15 @@ cout.flush();
             exprForFunction = SageBuilder::buildBinaryExpression<SgDotExp>((SgExpression *) receiver, exprForFunction);
             setX10SourcePosition(exprForFunction, env, x10Token);
 
+// MH-20141207
+#if 0
             SgClassDefinition *current_class_definition = getCurrentTypeDefinition();
+#endif
+#if 1
+            SgType *enclosing_type = class_declaration -> get_type();
+#else
             SgType *enclosing_type = current_class_definition -> get_declaration() -> get_type();
+#endif
             if (isSgThisExp(receiver) && (! receiver -> attributeExists("class")) && (! receiver -> attributeExists("prefix")) && (! isCompatibleTypes(containing_type, enclosing_type))) {
                 SgClassType *c_type = isSgClassType(containing_type);
                 SgJavaParameterizedType *p_type = isSgJavaParameterizedType(containing_type);
@@ -2300,6 +2294,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBinaryExpressionEnd(JNIEnv 
         XOR                  = 8,
         DOT_DOT              = 20,
         EQ                   = 21,
+        NE                   = 22,
         OR_OR                = 100, // Handled by separate function 
         AND_AND              = 101, // Handled by separate function 
         LAST_OPERATOR
@@ -2327,6 +2322,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBinaryExpressionEnd(JNIEnv 
         case REMAINDER:            binaryExpressionSupport<SgModOp>();            break;
         case DOT_DOT:              binaryExpressionSupport<SgDotDotExp>();        break;
         case EQ:                   binaryExpressionSupport<SgEqualityOp>();       break; 
+        case NE:                   binaryExpressionSupport<SgNotEqualOp>();    break; 
         case OR_OR:                binaryExpressionSupport<SgOrOp>();             break; 
         case AND_AND:              binaryExpressionSupport<SgAndOp>();            break;
 
@@ -2435,6 +2431,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBlockEnd(JNIEnv *env, jclas
     // DQ (7/30/2011): Take the block off of the scope stack and put it onto the statement stack so that we can 
     // process either blocks of other statements uniformally.
     SgBasicBlock *body = astX10ScopeStack.popBasicBlock();
+    // MH-20141202
     for (int i = 0; i  < numberOfStatements; i++) {
                 // MH (6/24/2014) : Added condition because the size of astX10ComponentStack seems to 
                 // be less than the numberOfStatements... should be fixed this
@@ -2442,8 +2439,10 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBlockEnd(JNIEnv *env, jclas
                         printf("Size of astX10ComponentStack is zero\n");
                         break;
                 }
+        
         SgStatement *statement = astX10ComponentStack.popStatement();
         if (SgProject::get_verbose() > 2) {
+            cerr << "i=" << i << " " << endl;
             cerr << "(7) Adding statement "
                  << statement -> class_name()
                  << " to a block"
@@ -2452,7 +2451,6 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBlockEnd(JNIEnv *env, jclas
         }
         body -> prepend_statement(statement);
     }
-
 
     astX10ComponentStack.push(body);
 
@@ -2936,11 +2934,11 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionForeachStatementEnd(JNIEnv 
 
     // Build the final Foreach Statement
     SgJavaForEachStatement *foreach_statement = astX10ScopeStack.popJavaForEachStatement();
-	
+        
     // DQ (9/3/2011): Change API as suggested by Philippe.
     foreach_statement -> set_element(variable_declaration);
     variable_declaration -> set_parent(foreach_statement);
-	
+        
     foreach_statement -> set_collection(collection);
     collection -> set_parent(foreach_statement);
     foreach_statement -> set_loop_body(action);
@@ -3696,10 +3694,14 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionThisReference(JNIEnv *env, 
 #if 0
         cactionThisReference(env, clz, x10Token);
 #else
+#if 0
+    SgClassDefinition *class_definition = currentClassDefinition;
+#else
     SgClassDefinition *class_definition = getCurrentTypeDefinition();
+#endif
     ROSE_ASSERT(! class_definition -> attributeExists("namespace"));
 
-    string className = class_definition -> get_declaration() -> get_name();
+//    string className = class_definition -> get_declaration() -> get_name();
     // printf ("Current class for ThisReference is: %s \n", className.c_str());
 
     SgClassSymbol *class_symbol = isSgClassSymbol(class_definition -> get_declaration() -> search_for_symbol_from_symbol_table());
@@ -3808,7 +3810,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionSetCurrentClassNameWithCopy
     else {
         ScopeStack child_astX10ScopeStack = *(new ScopeStack);
         for (std::list<SgScopeStatement*>::reverse_iterator i = astX10ScopeStack.rbegin(); i != astX10ScopeStack.rend(); i++) {
-           	child_astX10ScopeStack.push(*i); 
+                child_astX10ScopeStack.push(*i); 
         }
         astX10ScopeStack = child_astX10ScopeStack;
         scopeMap[currentTypeName] = astX10ScopeStack;
@@ -3825,7 +3827,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionSetCurrentClassNameWithCopy
 /*      
         // MH-20141015 : not neccesary? 
         for (std::list<SgComponentStatement*>::iterator i = astX10ComponentStack.rbegin(); i != astX10ComponentStack.rend(); i++) {
-           	astX10ComponentStack.push(*i); 
+                astX10ComponentStack.push(*i); 
         }
 */
         componentMap[currentTypeName] = astX10ComponentStack;
@@ -3837,14 +3839,24 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionSetCurrentClassNameWithCopy
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionSetCurrentClassName (JNIEnv *env, jclass clz, jstring type_name)
 {
     SgName type = convertJavaStringToCxxString(env, (jstring)env->NewGlobalRef(type_name));
-    // MH-20141016
+
     if (SgProject::get_verbose() > 2)
         printf ("Enter cactionSetCurrentClassName(): %s\n", type.str());
+
     cout << "Before: currentTypeName=" << currentTypeName << endl;
     printStack();
 
     scopeMap[currentTypeName] = astX10ScopeStack;
     componentMap[currentTypeName] = astX10ComponentStack;
+
+    // MH-20141205
+    if (currentTypeName == type.str()) {
+        if (SgProject::get_verbose() > 2) {
+            printf ("Do not need to change currenClassName\n");
+            printf ("Leaving cactionSetCurrentClassName(): %s\n", type.str());
+        }
+        return;
+    }
 
     currentTypeName = type.str();
     map<std::string, ScopeStack>::iterator it = scopeMap.find(currentTypeName);
@@ -3872,6 +3884,9 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionSetCurrentClassName (JNIEnv
    // MH-20141016
    cout << "After: currentTypeName=" << currentTypeName << endl;
    printStack();
+
+    if (SgProject::get_verbose() > 2)
+        printf ("Leaving cactionSetCurrentClassName(): %s\n", type.str());
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionSetCurrentFilePath (JNIEnv *env, jclass clz, jstring file)
@@ -3918,7 +3933,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionFinishEnd (JNIEnv *env, jcl
     astX10ComponentStack.push(finish_stmt); 
 
     if (SgProject::get_verbose() > 0)
-    	printf("Leaving cactionFinishEnd\n");
+        printf("Leaving cactionFinishEnd\n");
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionFinishExpr (JNIEnv *env, jclass clz, jobject x10Token)
@@ -3940,7 +3955,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionFinishExprEnd (JNIEnv *env,
     astX10ComponentStack.push(finish_expr); 
 
     if (SgProject::get_verbose() > 0)
-    	printf("Leaving cactionFinishExprEnd\n");
+        printf("Leaving cactionFinishExprEnd\n");
 }
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAt (JNIEnv *env, jclass clz, jobject x10Token)
@@ -3951,7 +3966,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAt (JNIEnv *env, jclass clz
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAtEnd (JNIEnv *env, jclass clz, jobject x10Token) 
 {
     if (SgProject::get_verbose() > 0)
-    	printf("Inside of cactionAtEnd\n");
+        printf("Inside of cactionAtEnd\n");
         
     SgBasicBlock *at_body = (SgBasicBlock *)astX10ComponentStack.popStatement();
     SgExpression *at_expr = (SgExpression *)astX10ComponentStack.popExpression();
@@ -3971,17 +3986,17 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAtExpr (JNIEnv *env, jclass
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAtExprEnd (JNIEnv *env, jclass clz, jobject x10Token) 
 {
     if (SgProject::get_verbose() > 0)
-    	printf("Inside of cactionAtExprEnd\n");
+        printf("Inside of cactionAtExprEnd\n");
      
     SgBasicBlock *at_body = (SgBasicBlock *)astX10ComponentStack.popStatement();
     SgExpression *at_expr = (SgExpression *)astX10ComponentStack.popExpression();
     SgAtExp *atexp_exp = SageBuilder::buildAtExp(at_expr, at_body);
     setX10SourcePosition(atexp_exp, env, x10Token);
-	 
+         
     astX10ComponentStack.push(atexp_exp); 
 
     if (SgProject::get_verbose() > 0)
-    	printf("Leaving cactionAtExprEnd\n");
+        printf("Leaving cactionAtExprEnd\n");
 }
 
 
@@ -4029,6 +4044,13 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAppendProperty (JNIEnv *env
     }
     else 
         initialized_name -> setAttribute("type", new AstRegExAttribute(getTypeName(argument_type)));
+
+    /**
+     * MH-20141209:
+     * Sets declptr to pass the post-process checking in 
+     * src/frontend/SageIII/astPostProcessing/fixupCxxSymbolTablesToSupportAliasingSymbols.C:FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeIntoCurrentScope ( SgScopeStatement* referencedScope, SgScopeStatement* currentScope, SgNode* causalNode, SgAccessModifier::access_modifier_enum accessLevel )
+     */
+    initialized_name->set_declptr(class_definition -> get_declaration() );
 
     astX10ComponentStack.push(initialized_name);
 
@@ -4096,5 +4118,130 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAtomicEnd (JNIEnv *env, jcl
     astX10ComponentStack.push(atomic_stmt); 
 
     if (SgProject::get_verbose() > 0)
-    	printf("Leaving cactionAtomicEnd\n");
+        printf("Leaving cactionAtomicEnd\n");
+}
+
+
+
+
+JNIEXPORT void Java_x10rose_visit_JNI_cactionAttachTypeParameterToType (JNIEnv *env, jclass clz, jstring x10_type_param_name, jobject x10Token)
+{
+    if (SgProject::get_verbose() > 0)
+        printf("Inside of cactionAttachTypeParameterToType\n");
+    
+    SgName type_param_name = convertJavaStringToCxxString(env, x10_type_param_name);
+
+    SgType *type = isSgType(astX10ComponentStack.pop());
+    ROSE_ASSERT(type);
+    type -> setAttribute("type-parameter", new AstRegExAttribute(type_param_name));
+    astX10ComponentStack.push(type); 
+
+    if (SgProject::get_verbose() > 0)
+        printf("Leaving cactionAttachTypeParameterToType\n");
+}
+
+
+JNIEXPORT void Java_x10rose_visit_JNI_cactionAttachTypeParameterToMethodDecl (JNIEnv *env, jclass clz, jstring x10_type_param_name, jobject x10Token)
+{
+    if (SgProject::get_verbose() > 0)
+        printf("Inside of cactionAttachTypeParameterToMethodDecl\n");
+    
+    SgName type_param_name = convertJavaStringToCxxString(env, x10_type_param_name);
+
+    SgMemberFunctionDeclaration *method_declaration = isSgMemberFunctionDeclaration(astX10ComponentStack.pop());
+    ROSE_ASSERT(method_declaration);
+#if 1
+    method_declaration -> setAttribute("type-parameter", new AstRegExAttribute(type_param_name));
+#else
+    if (!method_declaration -> attributeExists("type-parameter")) {
+        AstSgNodeListAttribute *listAttribute = new AstSgNodeListAttribute();
+        listAttribute -> addNode((SgNode *)&type_param_name);
+        method_declaration -> setAttribute("type-parameter", listAttribute);
+    } 
+    else {
+        AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) method_declaration -> getAttribute("type-parameter");
+        attribute -> addNode((SgNode *)&type_param_name);
+        method_declaration -> setAttribute("type-parameter", attribute);
+    } 
+#endif
+
+    astX10ComponentStack.push(method_declaration); 
+
+    if (SgProject::get_verbose() > 0)
+        printf("Leaving cactionAttachTypeParameterToMethodDecl\n");
+}
+
+JNIEXPORT void Java_x10rose_visit_JNI_cactionAttachTypeParameterToMethodCall (JNIEnv *env, jclass clz, jstring x10_type_param_name, jobject x10Token)
+{
+    if (SgProject::get_verbose() > 0)
+        printf("Inside of cactionAttachTypeParameterToMethodCall\n");
+    
+    SgName type_param_name = convertJavaStringToCxxString(env, x10_type_param_name);
+
+    SgFunctionCallExp *method_call = isSgFunctionCallExp(astX10ComponentStack.pop());
+    ROSE_ASSERT(method_call);
+#if 1
+    method_call -> setAttribute("type-parameter", new AstRegExAttribute(type_param_name));
+#else
+    if (!method_declaration -> attributeExists("type-parameter")) {
+        AstSgNodeListAttribute *listAttribute = new AstSgNodeListAttribute();
+        listAttribute -> addNode((SgNode *)&type_param_name);
+        method_declaration -> setAttribute("type-parameter", listAttribute);
+    } 
+    else {
+        AstSgNodeListAttribute *attribute = (AstSgNodeListAttribute *) method_declaration -> getAttribute("type-parameter");
+        attribute -> addNode((SgNode *)&type_param_name);
+        method_declaration -> setAttribute("type-parameter", attribute);
+    } 
+#endif
+
+    astX10ComponentStack.push(method_call); 
+
+    if (SgProject::get_verbose() > 0)
+        printf("Leaving cactionAttachTypeParameterToMethodCall\n");
+}
+
+JNIEXPORT void Java_x10rose_visit_JNI_cactionAttachGuard(JNIEnv *env, jclass clz, jstring x10_guard_name, jobject x10Token)
+{
+    if (SgProject::get_verbose() > 0)
+        printf("Inside of cactionAttachGuard\n");
+    
+    SgName guard_name = convertJavaStringToCxxString(env, x10_guard_name);
+    cout << "Guard=" << guard_name << endl;
+
+    SgMemberFunctionDeclaration *method_declaration = isSgMemberFunctionDeclaration(astX10ComponentStack.pop());
+    ROSE_ASSERT(method_declaration);
+
+    method_declaration -> setAttribute("guard", new AstRegExAttribute(guard_name));
+    astX10ComponentStack.push(method_declaration); 
+
+    if (SgProject::get_verbose() > 0)
+        printf("Leaving cactionAttachGuard\n");
+}
+
+JNIEXPORT void Java_x10rose_visit_JNI_cactionWhen (JNIEnv *env, jclass clz, jobject x10Token) 
+{
+    if (SgProject::get_verbose() > 0)
+        printf("Inside of cactionWhen\n");
+
+    // do nothing
+
+    if (SgProject::get_verbose() > 0)
+        printf("Leaving cactionWhen\n");
+}
+
+JNIEXPORT void Java_x10rose_visit_JNI_cactionWhenEnd (JNIEnv *env, jclass clz, jobject x10Token)
+{
+    if (SgProject::get_verbose() > 0)
+        printf("Inside of cactionWhenEnd\n");
+        
+    SgBasicBlock *when_body = (SgBasicBlock *)astX10ComponentStack.popStatement();
+    SgExpression *when_expr = (SgExpression *)astX10ComponentStack.popExpression();
+    SgWhenStmt *when_stmt = SageBuilder::buildWhenStmt(when_expr, when_body);
+    setX10SourcePosition(when_stmt, env, x10Token);
+     
+    astX10ComponentStack.push(when_stmt); 
+    
+    if (SgProject::get_verbose() > 0)
+        printf("Leaving cactionWhenEnd\n");
 }

@@ -1622,6 +1622,51 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAtomic
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAtomicEnd
         (JNIEnv *, jclass, jobject);
 
+/*
+ * Class:     x10rose_visit_JNI
+ * Method:    cactionAttachTypeParameterToType
+ */
+JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAttachTypeParameterToType
+        (JNIEnv *, jclass, jstring, jobject);
+
+/*
+ * Class:     x10rose_visit_JNI
+ * Method:    cactionAttachTypeParameterToMethodDecl
+ */
+JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAttachTypeParameterToMethodDecl
+        (JNIEnv *, jclass, jstring, jobject);
+
+/*
+ * Class:     x10rose_visit_JNI
+ * Method:    cactionAttachTypeParameterToMethodCall
+ */
+JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAttachTypeParameterToMethodCall
+        (JNIEnv *, jclass, jstring, jobject);
+
+/*
+ * Class:     x10rose_visit_JNI
+ * Method:    cactionAttachGuard
+ */
+JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAttachGuard
+        (JNIEnv *, jclass, jstring, jobject);
+
+
+/*
+ * Class:     x10rose_visit_JNI
+ * Method:    cactionWhen
+ * Signature: (LX10Token;)V
+ */
+JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionWhen
+        (JNIEnv *, jclass, jobject);
+
+/*
+ * Class:     x10rose_visit_JNI
+ * Method:    cactionWhenEnd
+ * Signature: (LX10Token;)V
+ */
+JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionWhenEnd
+        (JNIEnv *, jclass, jobject);
+
 }
 #ifdef __cplusplus
 #endif
