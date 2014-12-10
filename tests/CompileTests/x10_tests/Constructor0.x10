@@ -1,3 +1,4 @@
-public class Constructor0 {
-	
+class Constructor0 {
+    def this() {
+    }
 }

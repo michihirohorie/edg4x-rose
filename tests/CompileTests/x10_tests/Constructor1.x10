@@ -1,7 +1,4 @@
-public class Constructor1 {
-	
-	public this() {
-		
-	}
-
+class Constructor1 {
+    def this() {}
+    def func() {}
 }

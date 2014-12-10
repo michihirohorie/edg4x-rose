@@ -91,8 +91,24 @@ TESTCODES = \
     Rail4.x10 \
     TypeParam0.x10 \
     TypeParam1.x10 \
+    TypeParam2.x10 \
+    TypeParam3.x10 \
+    TypeParam0_p.x10 \
+    TypeParam1_p.x10 \
+    TypeParam2_p.x10 \
     Here0.x10 \
-    Here1.x10
+    Here1.x10 \
+    MethodCall0.x10 \
+    MethodCall1.x10 \
+    Switch0.x10 \
+    Switch1.x10 \
+    Measure_CUDA.x10 \
+    Constructor0.x10 \
+    Constructor1.x10 \
+    Constructor2.x10 \
+    Constructor3.x10 \
+    AssignOp0.x10 \
+    ThisReference0.x10 
 
 # Warning: Use -rose:output to unparse file in build tree, rather
 # than override the original file in the source tree.

@@ -1,5 +1,9 @@
-public class Constructor2 {
-	public this() {
-		super();
-	}
+class Constructor2 {
+    def this() {
+        val a = 0;
+    }
+
+    def func() {
+        val b = 1;
+    }
 }
