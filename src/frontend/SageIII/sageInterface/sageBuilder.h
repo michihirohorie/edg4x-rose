@@ -1226,6 +1226,8 @@ ROSE_DLL_API SgAtExp* buildAtExp(SgExpression *expression, SgBasicBlock *body);
 // MH (11/7/2014): Added finish expression support
 ROSE_DLL_API SgFinishExp* buildFinishExp(SgExpression *expression, SgBasicBlock *body);
 
+ROSE_DLL_API SgWhenStmt* buildWhenStmt(SgExpression *expression, SgBasicBlock *body);
+
 ROSE_DLL_API SgHereExp* buildHereExpression();
 
 ROSE_DLL_API SgDotDotExp* buildDotDotExp();

@@ -8501,6 +8501,18 @@ SgAtStmt* SageBuilder::buildAtStmt(SgExpression *expression, SgBasicBlock *body)
        return at_stmt;
 }
 
+SgWhenStmt* SageBuilder::buildWhenStmt(SgExpression *expression, SgBasicBlock *body)
+{
+       ROSE_ASSERT(expression);
+       ROSE_ASSERT(body);
+       SgWhenStmt *when_stmt = new SgWhenStmt(expression, body);
+       SageInterface::setSourcePosition(when_stmt);
+       expression->set_parent(when_stmt);
+       body->set_parent(when_stmt);
+
+       return when_stmt;
+}
+
 // MH (9/14/2014): Added atexpr support
 SgAtExp* SageBuilder::buildAtExp(SgExpression *expression, SgBasicBlock *body)
 {
