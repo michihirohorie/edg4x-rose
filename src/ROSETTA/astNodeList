@@ -791,3 +791,4 @@ SgHereExp
 SgDotDotExp
 SgFinishExp
 SgClassPropertyList
+SgWhenStmt

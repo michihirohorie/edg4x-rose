@@ -5,6 +5,7 @@
         NEW_TERMINAL_MACRO (AtStmt,     "AtStmt",     "AT_STMT" );
         NEW_TERMINAL_MACRO (ClassPropertyList,     "ClassPropertyList",     "CLASS_PROPERTY_LIST" );
         NEW_TERMINAL_MACRO (AtomicStmt, "AtomicStmt", "ATOMIC_STMT" );
+        NEW_TERMINAL_MACRO (WhenStmt, "WhenStmt", "WHEN_STMT" );
 
         AsyncStmt.setFunctionPrototype          ( "HEADER_ASYNC_STATEMENT", "../Grammar/Statement.code" );
         AsyncStmt.setFunctionSource             ( "SOURCE_ASYNC_STATEMENT", "../Grammar/Statement.code" );
@@ -62,5 +63,18 @@
         AtomicStmt.editSubstitute               ( "LIST_FUNCTION_NAME", "statement" );
         AtomicStmt.editSubstitute               ( "LIST_ELEMENT_DATA_TYPE", "SgStatement*" );
         AtomicStmt.setDataPrototype             ( "SgStatement*", "body", "=NULL",
+                                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+
+        WhenStmt.setFunctionPrototype         ( "HEADER_WHEN_STATEMENT", "../Grammar/Statement.code" );
+        WhenStmt.setFunctionSource            ( "SOURCE_WHEN_STATEMENT", "../Grammar/Statement.code" );
+        WhenStmt.editSubstitute               ( "LIST_DATA_TYPE", "SgStatementPtrList" );
+        WhenStmt.editSubstitute               ( "LIST_NAME", "statements" );
+        WhenStmt.editSubstitute               ( "LIST_FUNCTION_RETURN_TYPE", "void" );
+        WhenStmt.editSubstitute               ( "LIST_FUNCTION_NAME", "statement" );
+        WhenStmt.editSubstitute               ( "LIST_ELEMENT_DATA_TYPE", "SgStatement*" );
+        WhenStmt.setDataPrototype             ( "SgExpression*", "expression", "= NULL",
+                                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+        WhenStmt.setDataPrototype             ( "SgStatement*", "body", "=NULL",
                                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
