@@ -707,6 +707,22 @@ ROSE_DLL_API SgTypeExpression *buildTypeExpression(SgType* type);
 ROSE_DLL_API SgFunctionParameterRefExp *buildFunctionParameterRefExp(int parameter_number, int parameter_level );
 ROSE_DLL_API SgFunctionParameterRefExp *buildFunctionParameterRefExp_nfi(int parameter_number, int parameter_level );
 
+
+// DQ (9/3/2014): Adding support for C++11 Lambda expressions
+ROSE_DLL_API SgLambdaExp* buildLambdaExp    (SgLambdaCaptureList* lambda_capture_list, SgClassDeclaration* lambda_closure_class, SgFunctionDeclaration* lambda_function);
+ROSE_DLL_API SgLambdaExp* buildLambdaExp_nfi(SgLambdaCaptureList* lambda_capture_list, SgClassDeclaration* lambda_closure_class, SgFunctionDeclaration* lambda_function);
+
+#if 0
+ROSE_DLL_API SgLambdaCapture* buildLambdaCapture    (SgInitializedName* capture_variable, SgInitializedName* source_closure_variable, SgInitializedName* closure_variable);
+ROSE_DLL_API SgLambdaCapture* buildLambdaCapture_nfi(SgInitializedName* capture_variable, SgInitializedName* source_closure_variable, SgInitializedName* closure_variable);
+#else
+ROSE_DLL_API SgLambdaCapture* buildLambdaCapture    (SgExpression* capture_variable, SgExpression* source_closure_variable, SgExpression* closure_variable);
+ROSE_DLL_API SgLambdaCapture* buildLambdaCapture_nfi(SgExpression* capture_variable, SgExpression* source_closure_variable, SgExpression* closure_variable);
+#endif
+
+ROSE_DLL_API SgLambdaCaptureList* buildLambdaCaptureList    ();
+ROSE_DLL_API SgLambdaCaptureList* buildLambdaCaptureList_nfi();
+
 //@}
 
 //--------------------------------------------------------------
@@ -780,6 +796,20 @@ buildTypedefDeclaration_nfi(const std::string& name, SgType* base_type, SgScopeS
 
 // MH-20141106
 ROSE_DLL_API SgClassPropertyList * buildClassPropertyList(SgInitializedName* in1 = NULL, SgInitializedName* in2 = NULL, SgInitializedName* in3 = NULL, SgInitializedName* in4 = NULL, SgInitializedName* in5 = NULL, SgInitializedName* in6 = NULL, SgInitializedName* in7 = NULL, SgInitializedName* in8 = NULL, SgInitializedName* in9 = NULL, SgInitializedName* in10 = NULL);
+
+ROSE_DLL_API SgTemplateTypedefDeclaration* 
+buildTemplateTypedefDeclaration_nfi(const SgName & name, SgType* base_type, SgScopeStatement* scope = NULL, bool has_defining_base=false);
+
+#if 1
+// ROSE_DLL_API SgTemplateInstantiationTypedefDeclaration* 
+// buildTemplateInstantiationTypedefDeclaration_nfi(SgName name, SgType* base_type, SgScopeStatement* scope, bool has_defining_base, SgTemplateTypedefDeclaration* templateTypedefDeclaration, SgTemplateArgumentPtrList templateArgumentList);
+// ROSE_DLL_API SgTemplateInstantiationTypedefDeclaration* 
+// buildTemplateInstantiationTypedefDeclaration_nfi(SgName name, SgType* base_type, SgScopeStatement* scope, bool has_defining_base, SgTemplateTypedefDeclaration* templateTypedefDeclaration);
+// ROSE_DLL_API SgTemplateInstantiationTypedefDeclaration* 
+// buildTemplateInstantiationTypedefDeclaration_nfi();
+ROSE_DLL_API SgTemplateInstantiationTypedefDeclaration*
+buildTemplateInstantiationTypedefDeclaration_nfi(SgName & name, SgType* base_type, SgScopeStatement* scope, bool has_defining_base, SgTemplateTypedefDeclaration* templateTypedefDeclaration, SgTemplateArgumentPtrList & templateArgumentList);
+#endif
 
 //! Build an empty SgFunctionParameterList, possibly with some initialized names filled in
 ROSE_DLL_API SgFunctionParameterList * buildFunctionParameterList(SgInitializedName* in1 = NULL, SgInitializedName* in2 = NULL, SgInitializedName* in3 = NULL, SgInitializedName* in4 = NULL, SgInitializedName* in5 = NULL, SgInitializedName* in6 = NULL, SgInitializedName* in7 = NULL, SgInitializedName* in8 = NULL, SgInitializedName* in9 = NULL, SgInitializedName* in10 = NULL);
@@ -1375,6 +1405,38 @@ ROSE_DLL_API SgJavaWildcardType *getUniqueJavaWildcardExtends(SgType *);
 ROSE_DLL_API SgJavaWildcardType *getUniqueJavaWildcardSuper(SgType *);
 
 //@}
+
+
+//----------------------------------------------------------
+//@{
+/*! @name Untyped IR Node Build Interfaces
+    \brief  Build function for ROSE AST's in terms of Untyped IR nodes.
+
+The ROSE Untyped IR nodes can be a starting place for defining the new language frontend, these IR nodes 
+address the interface from an external language parser and the construction of the ROSE Untyped AST.  
+Later iterations on the ROSE Untyped AST can be used to translate (or construct) a proper ROSE AST in 
+terms of non-untyped IR nodes.
+
+ \todo define translation passes to construct non-untype IR nodes.
+*/
+
+/*! \brief build a concept of scope in the untyped AST.
+*/
+ROSE_DLL_API SgUntypedScope* buildUntypedScope(SgUntypedDeclarationList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list);
+
+ROSE_DLL_API SgUntypedGlobalScope*   buildUntypedGlobalScope(SgUntypedDeclarationList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list);
+ROSE_DLL_API SgUntypedFunctionScope* buildUntypedFunctionScope(SgUntypedDeclarationList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list);
+ROSE_DLL_API SgUntypedModuleScope*   buildUntypedModuleScope(SgUntypedDeclarationList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list);
+
+ROSE_DLL_API SgUntypedFunctionDeclaration*      buildUntypedFunctionDeclaration(std::string name, SgUntypedInitializedNameList* parameters, SgUntypedType* type, SgUntypedFunctionScope* scope, SgUntypedNamedStatement* end_statement);
+ROSE_DLL_API SgUntypedProgramHeaderDeclaration* buildUntypedProgramHeaderDeclaration(std::string name, SgUntypedInitializedNameList* parameters, SgUntypedType* type, SgUntypedFunctionScope* scope, SgUntypedNamedStatement* end_statement);
+ROSE_DLL_API SgUntypedSubroutineDeclaration*    buildUntypedSubroutineDeclaration(std::string name, SgUntypedInitializedNameList* parameters, SgUntypedType* type, SgUntypedFunctionScope* scope, SgUntypedNamedStatement* end_statement);
+
+ROSE_DLL_API SgUntypedFile* buildUntypedFile(SgUntypedGlobalScope* scope);
+
+//@}
+
+
 
 } // end of namespace
 
