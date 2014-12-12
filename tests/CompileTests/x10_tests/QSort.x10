@@ -43,7 +43,7 @@ public class QSort {
       return i;
   }
 
-  static def qsort(data:Rail[int], left:long, right:long) {
+  public static def qsort(data:Rail[int], left:long, right:long) {
       index:long = partition(data, left, right);
       finish {
           if (left < index - 1)
@@ -56,8 +56,18 @@ public class QSort {
 
   public static def main(args:Rail[String]) {
       val N = args.size>0 ? Long.parse(args(0)) : 100;
-      val data = new Rail[int](N);
+      val r = new x10.util.Random();
+      val data = new Rail[int](N);//, (long)=>r.nextInt(9999n));
       qsort(data, 0, N-1);
+      for (i in 0..(N-1)) {
+          Console.OUT.print(data(i)); 
+          if (i%10 == 9) {
+	      Console.OUT.println();
+          } else {
+              Console.OUT.print(", ");
+          }
+      }
+      Console.OUT.println();
   }
 }
 

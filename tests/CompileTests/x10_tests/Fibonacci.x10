@@ -9,6 +9,8 @@
  *  (C) Copyright IBM Corporation 2006-2014.
  */
 
+import x10.io.Console;
+
 /**
  * This is a small program to illustrate the use of 
  * <code>async</code> and <code>finish</code> in a 
@@ -42,7 +44,9 @@ public class Fibonacci {
 
   public static def main(args:Rail[String]) {
     val n = (args.size > 0) ? Long.parse(args(0)) : 10;
+    Console.OUT.println("Computing fib("+n+")");
     val f = fib(n);
+    Console.OUT.println("fib("+n+") = "+f);
   }
 }
 

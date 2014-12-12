@@ -89,6 +89,12 @@ TESTCODES = \
     Rail2.x10 \
     Rail3.x10 \
     Rail4.x10 \
+    Rail5.x10 \
+    Rail6.x10 \
+    Rail7.x10 \
+    Rail8.x10 \
+    Rail9.x10 \
+    Rail10.x10 \
     TypeParam0.x10 \
     TypeParam1.x10 \
     TypeParam2.x10 \
@@ -109,6 +115,7 @@ TESTCODES = \
     Constructor3.x10 \
     AssignOp0.x10 \
     ThisReference0.x10 
+#    KMeans.x10
 
 # Warning: Use -rose:output to unparse file in build tree, rather
 # than override the original file in the source tree.
