@@ -1667,6 +1667,22 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionWhen
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionWhenEnd
         (JNIEnv *, jclass, jobject);
 
+
+/*
+ * Class:     x10rose_visit_JNI
+ * Method:    cactionTuple
+ * Signature: (LX10Token;)V
+ */
+JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionTuple
+        (JNIEnv *, jclass, jobject);
+
+/*
+ * Class:     x10rose_visit_JNI
+ * Method:    cactionTupleEnd
+ * Signature: (LX10Token;)V
+ */
+JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionTupleEnd
+        (JNIEnv *, jclass, jint, jobject);
 }
 #ifdef __cplusplus
 #endif

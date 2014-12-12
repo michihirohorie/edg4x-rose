@@ -4245,3 +4245,43 @@ JNIEXPORT void Java_x10rose_visit_JNI_cactionWhenEnd (JNIEnv *env, jclass clz, j
     if (SgProject::get_verbose() > 0)
         printf("Leaving cactionWhenEnd\n");
 }
+
+JNIEXPORT void Java_x10rose_visit_JNI_cactionTuple (JNIEnv *env, jclass clz, jobject x10Token) 
+{
+    if (SgProject::get_verbose() > 0)
+        printf("Inside of cactionTuple\n");
+
+    // do nothing
+
+    if (SgProject::get_verbose() > 0)
+        printf("Leaving cactionTuple\n");
+}
+
+
+JNIEXPORT void Java_x10rose_visit_JNI_cactionTupleEnd (JNIEnv *env, jclass clz, jint tuple_size, jobject x10Token)
+{
+    if (SgProject::get_verbose() > 0)
+        printf("Inside of cactionTupleEnd\n");
+
+    if (tuple_size <= 0) 
+        return;
+
+    list<SgExpression *> expression_list;
+    for (int i = 0; i < tuple_size; i++) { // Reverse the content of the stack.
+        SgExpression *expression = isSgExpression(astX10ComponentStack.pop());
+        ROSE_ASSERT(expression);
+        expression_list.push_front(expression);
+    }
+
+    vector<SgExpression*> expression_vector;
+    for (list<SgExpression *>::iterator i = expression_list.begin(); i != expression_list.end(); ++i) {
+        expression_vector.push_back(*i);
+    }
+
+    SgTupleExp *tuple =  SageBuilder::buildTupleExp(expression_vector);
+    setX10SourcePosition(tuple, env, x10Token);
+    astX10ComponentStack.push(tuple); 
+
+    if (SgProject::get_verbose() > 0)
+        printf("Leaving cactionTupleEnd\n");
+}

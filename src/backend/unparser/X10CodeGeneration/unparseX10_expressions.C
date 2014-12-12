@@ -93,7 +93,7 @@ void Unparse_X10::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
         case V_SgHereExp:              { unparseHereExpression(expr, info); break; }
         case V_SgAtExp:                { unparseAtExpression(expr, info); break; }
         case V_SgFinishExp:            { unparseFinishExpression(expr, info); break; }
-
+        case V_SgTupleExp:             { unparseTupleExpression(expr, info); break; } 
 
         default: {
 
@@ -1684,6 +1684,26 @@ Unparse_X10::unparseFinishExpression(SgExpression *expr, SgUnparse_Info& info) {
     unparseStatement(finish->get_body(), info);
 }
 
+void
+Unparse_X10::unparseExprListExp(SgExprListExp* expr_list_exp, SgUnparse_Info& info)
+{
+    SgExpressionPtrList& exps = expr_list_exp->get_expressions();
+    SgExpressionPtrList::iterator exp_it = exps.begin();
+    for(exp_it = exps.begin(); exp_it != exps.end(); exp_it++) {
+        if (exp_it != exps.begin())
+            curprint(", ");
+        unparseExpression(*exp_it, info);
+    }
+}
+
+
+void
+Unparse_X10::unparseTupleExpression(SgExpression *expr, SgUnparse_Info& info) {
+    SgTupleExp *tuple = isSgTupleExp(expr);
+    curprint_indented("[", info);
+    unparseExprListExp(tuple, info);
+    curprint_indented("] ", info);
+}
 
 void
 Unparse_X10::unparseHereExpression(SgExpression *expr, SgUnparse_Info& info) {

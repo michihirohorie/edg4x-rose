@@ -279,6 +279,8 @@ class Unparse_X10 : public UnparseLanguageIndependentConstructs
           void unparseHereExpression(SgExpression *, SgUnparse_Info& info);
           void unparseAtExpression(SgExpression *, SgUnparse_Info& info);
           void unparseFinishExpression(SgExpression *, SgUnparse_Info& info);
+          void unparseExprListExp(SgExprListExp *, SgUnparse_Info& info);
+          void unparseTupleExpression(SgExpression *, SgUnparse_Info& info);
    };
 
 #endif
