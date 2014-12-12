@@ -4088,11 +4088,19 @@ JNIEXPORT void JNICALL cactionArrayAllocationExpressionEnd(JNIEnv *env, jclass, 
     int num_dimensions = x10_num_dimensions;
     bool has_initializers = x10_has_initializers;
 
+#if 1
+    SgExpression *initializer = NULL;
+    if (has_initializers) {
+        initializer = isSgExpression(astX10ComponentStack.pop());
+        ROSE_ASSERT(initializer);
+    }
+#else
     SgAggregateInitializer *initializer = NULL;
     if (has_initializers) {
         initializer = isSgAggregateInitializer(astX10ComponentStack.pop());
         ROSE_ASSERT(initializer);
     }
+#endif
 
     list<SgExpression*> argument_list;
     for (int i = 0; i < num_dimensions; i++) { // pop the arguments in reverse order

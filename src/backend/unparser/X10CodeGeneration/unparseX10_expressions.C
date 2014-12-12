@@ -1003,20 +1003,27 @@ Unparse_X10::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
          SgConstructorInitializer *init = new_op -> get_constructor_args();
          ROSE_ASSERT(init);
          vector<SgExpression *> args = init -> get_args() -> get_expressions();
-         for (int i = 0; i < args.size(); i++) {
-             curprint ("(");
-             if (! has_aggregate_initializer) {
-                 unparseExpression(args[i], info);
-             }
-             curprint(")");
+         curprint ("(");
+         for (int i = 0; i < args.size(); i++) { // Is this correct? MH-20141212
+             unparseExpression(args[i], info);
          }
+         if (has_aggregate_initializer) {
+             AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) new_op -> getAttribute("initializer");
+             SgExpression *initializer = isSgExpression(attribute -> getNode());
+             ROSE_ASSERT(initializer);
+             curprint(", ");
+             unparseExpression(initializer, info);
+         }
+         curprint(")");
 
+#if 0
          if (has_aggregate_initializer) {
              AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) new_op -> getAttribute("initializer");
              SgAggregateInitializer *initializer = isSgAggregateInitializer(attribute -> getNode());
              ROSE_ASSERT(initializer);
              unparseAggrInit(initializer, info);
          }
+#endif
      }
      else {
          AstRegExAttribute *attribute = (AstRegExAttribute *) new_op -> getAttribute("type");
