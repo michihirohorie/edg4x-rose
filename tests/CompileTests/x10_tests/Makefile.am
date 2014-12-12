@@ -95,6 +95,7 @@ TESTCODES = \
     Rail8.x10 \
     Rail9.x10 \
     Rail10.x10 \
+    Rail11.x10 \
     TypeParam0.x10 \
     TypeParam1.x10 \
     TypeParam2.x10 \
