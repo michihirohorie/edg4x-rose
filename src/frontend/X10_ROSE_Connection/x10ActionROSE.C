@@ -1717,8 +1717,9 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionTypeReference(JNIEnv *env, 
         jclass cls = get_class(env, x10Visitor);
         scopeMap[currentTypeName] = astX10ScopeStack;
         componentMap[currentTypeName] = astX10ComponentStack;
-        jmethodID method_id = get_method(env, cls, "addFileIndex", "()Z");
-        jboolean isOtherFilesExist = env->CallIntMethod(x10Visitor, method_id);
+        jmethodID method_id1 = get_method(env, cls, "addFileIndex", "()Z");
+        jmethodID method_id2;
+        jboolean isOtherFilesExist = env->CallIntMethod(x10Visitor, method_id1);
 
 #if 0
         if (isOtherFilesExist == JNI_TRUE) {
@@ -1729,8 +1730,8 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionTypeReference(JNIEnv *env, 
 #endif
             // MH-20141127
             std::string formerType = currentTypeName;
-            method_id = get_method(env, cls, "visitDeclarations", "()V");
-            env->CallIntMethod(x10Visitor, method_id);
+            method_id2 = get_method(env, cls, "visitDeclarations", "()V");
+            env->CallIntMethod(x10Visitor, method_id2);
 
 #if 0
             method_id = get_method(env, cls, "subFileIndex", "()V");
@@ -1758,11 +1759,11 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionTypeReference(JNIEnv *env, 
             if (type != NULL) 
                 break;
 
-            isOtherFilesExist = env->CallIntMethod(x10Visitor, method_id);
+            isOtherFilesExist = env->CallIntMethod(x10Visitor, method_id1);
         }
-        method_id = get_method(env, cls, "subFileIndex", "()V");
+        method_id2 = get_method(env, cls, "subFileIndex", "()V");
         for (int i = 0; i < counter; ++i) {
-            env->CallIntMethod(x10Visitor, method_id);
+            env->CallIntMethod(x10Visitor, method_id2);
         }
 #if 0
         else {
