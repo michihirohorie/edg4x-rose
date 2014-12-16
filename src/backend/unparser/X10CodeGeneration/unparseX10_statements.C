@@ -160,9 +160,7 @@ ROSE_ASSERT(isSgSourceFile(attribute -> getNode()));
 /*
 */
 
-cout << "1205-A:" << type_declaration << endl;
             unparseStatement(type_declaration, info);
-cout << "1205-B" << endl;
         }
     }
 // TODO: Remove this !
@@ -172,7 +170,6 @@ cout << "*** @ No types" << endl;
 cout.flush();
 }
 */
-cout << "1205-C" << endl;
 }
 
 //-----------------------------------------------------------------------------------
