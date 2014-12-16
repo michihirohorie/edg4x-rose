@@ -115,7 +115,12 @@ TESTCODES = \
     Constructor2.x10 \
     Constructor3.x10 \
     AssignOp0.x10 \
-    ThisReference0.x10 
+    ThisReference0.x10 \
+    EqualOp0.x10 \
+    EqualOp1.x10 \ 
+    EqualOp2.x10 \
+    Minus0.x10 \
+    Minus1.x10 
 #    KMeans.x10
 
 # Warning: Use -rose:output to unparse file in build tree, rather
