@@ -1194,11 +1194,24 @@ Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
         isUnparse = 0;  
     }
 
+    // MH-20141216
+    if (mfuncdecl_stmt -> attributeExists("annotations")) {
+         AstSgNodeListAttribute *annotations_attribute = (AstSgNodeListAttribute *) mfuncdecl_stmt -> getAttribute("annotations");
+         for (int i = 0; i < annotations_attribute -> size(); i++) {
+             SgType *type = isSgType(annotations_attribute -> getNode(i));
+             curprint("@");
+             unparseType(type, info);
+             curprint(" ");
+         }
+    }
+
     int isConstructor = 0;
     // if constructor
     if (mfuncdecl_stmt->get_name() == mfuncdecl_stmt->get_associatedClassDeclaration()->get_name()) 
         isConstructor = 1;
 
+// MH-20141216
+#if 0
     AstSgNodeListAttribute *annotations_attribute = (AstSgNodeListAttribute *) mfuncdecl_stmt -> getAttribute("annotations");
     if (annotations_attribute) {
         for (int i = 0; i < annotations_attribute -> size(); i++) {
@@ -1208,6 +1221,7 @@ Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             curprint_indented("", info);
         }
     }
+#endif
 
 //
 // TODO: REMOVE THIS
@@ -1320,6 +1334,8 @@ Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
              curprint(", ");
          }
 
+// MH-20141216
+#if 0
          AstSgNodeListAttribute *annotations_attribute = (AstSgNodeListAttribute *) (*name_it) -> getAttribute("annotations");
          if (annotations_attribute) {
              for (int i = 0; i < annotations_attribute -> size(); i++) {
@@ -1328,6 +1344,7 @@ Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                  curprint(" ");
              }
          }
+#endif
                 
          // MH-20141030 : handles argument modifier before calling unparseInitializedName
          if (! (*name_it) -> attributeExists("final")) {
@@ -1573,6 +1590,18 @@ void
 Unparse_X10::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info) {
     SgVariableDeclaration* vardecl_stmt = isSgVariableDeclaration(stmt);
     ROSE_ASSERT(vardecl_stmt != NULL);
+#if 1
+    // MH-20141216
+    if (vardecl_stmt -> attributeExists("annotations")) {
+         AstSgNodeListAttribute *annotations_attribute = (AstSgNodeListAttribute *) vardecl_stmt -> getAttribute("annotations");
+         for (int i = 0; i < annotations_attribute -> size(); i++) {
+             SgType *type = isSgType(annotations_attribute -> getNode(i));
+             curprint("@");
+             unparseType(type, info);
+             curprint(" ");
+         }
+    }
+#else
     AstSgNodeListAttribute *annotations_attribute = (AstSgNodeListAttribute *) vardecl_stmt -> getAttribute("annotations");
     if (annotations_attribute) {
         for (int i = 0; i < annotations_attribute -> size(); i++) {
@@ -1582,6 +1611,7 @@ Unparse_X10::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info) {
             curprint_indented("", info);
         }
     }
+#endif
 //    unparseDeclarationModifier(vardecl_stmt->get_declarationModifier(), info);
         SgDeclarationModifier& mod = vardecl_stmt->get_declarationModifier();
     unparseStorageModifier(mod.get_storageModifier(), info);

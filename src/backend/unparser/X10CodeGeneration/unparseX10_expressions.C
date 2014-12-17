@@ -967,6 +967,17 @@ Unparse_X10::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
          curprint(".");
      }
 */
+    // MH-20141216
+    if (new_op -> attributeExists("annotations")) {
+         AstSgNodeListAttribute *annotations_attribute = (AstSgNodeListAttribute *) new_op -> getAttribute("annotations");
+         for (int i = 0; i < annotations_attribute -> size(); i++) {
+             SgType *type = isSgType(annotations_attribute -> getNode(i));
+             curprint("@");
+             unparseType(type, info);
+             curprint(" ");
+         }
+    }
+
      curprint("new ");
 
      if (isSgArrayType(new_op -> get_specified_type())) {
@@ -1592,7 +1603,12 @@ Unparse_X10::unparseX10MarkerAnnotation(SgExpression *expr, SgUnparse_Info& info
     curprint("@");
     AstRegExAttribute *attribute = (AstRegExAttribute *) marker_annotation -> getAttribute("type");
     if (attribute) {
-        curprint(attribute -> expression);
+//        curprint(attribute -> expression);
+        string expr = attribute->expression;
+        if (expr.compare(0, 2, "::") == 0) 
+            expr = expr.substr(2);
+        replaceString(expr, "::", ".");
+        curprint(expr);
     }
     else {
         unparseType(marker_annotation -> get_type(), info);
@@ -1610,7 +1626,12 @@ Unparse_X10::unparseX10SingleMemberAnnotation(SgExpression *expr, SgUnparse_Info
     curprint("@");
     AstRegExAttribute *attribute = (AstRegExAttribute *) single_member_annotation -> getAttribute("type");
     if (attribute) {
-        curprint(attribute -> expression);
+//        curprint(attribute -> expression);
+        string expr = attribute->expression;
+        if (expr.compare(0, 2, "::") == 0) 
+            expr = expr.substr(2);
+        replaceString(expr, "::", ".");
+        curprint(expr);
     }
     else {
         unparseType(single_member_annotation -> get_type(), info);
@@ -1631,7 +1652,12 @@ Unparse_X10::unparseX10NormalAnnotation(SgExpression *expr, SgUnparse_Info& info
     curprint("@");
     AstRegExAttribute *attribute = (AstRegExAttribute *) normal_annotation -> getAttribute("type");
     if (attribute) {
-        curprint(attribute -> expression);
+//        curprint(attribute -> expression);
+        string expr = attribute->expression;
+        if (expr.compare(0, 2, "::") == 0) 
+            expr = expr.substr(2);
+        replaceString(expr, "::", ".");
+        curprint(expr);
     }
     else {
         unparseType(normal_annotation -> get_type(), info);

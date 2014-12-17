@@ -574,6 +574,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBuildMethodSupportStart(JNI
    SgName name = convertJavaStringToCxxString(env, x10_name);
     if (SgProject::get_verbose() > 1)
         printf ("Inside of BuildMethodSupportStart for method = %s \n", name.str());
+
     SgClassDefinition *class_definition = isSgClassDefinition(astX10ScopeStack.top());
     printStack();
     ROSE_ASSERT(class_definition && (! class_definition -> attributeExists("namespace")));
@@ -1565,11 +1566,11 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionMethodDeclarationHeader(JNI
 #if 0
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionMethodDeclarationEnd(JNIEnv *env, jclass clz, int num_annotations, int num_statements, jobject x10Token) 
 #else
-JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionMethodDeclarationEnd(JNIEnv *env, jclass clz, jint x10_numberOfStatements, jobject x10Token) 
+JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionMethodDeclarationEnd(JNIEnv *env, jclass clz, jint x10_numberOfAnnotations, jint x10_numberOfStatements, jobject x10Token) 
 #endif
 { 
 #if 1
-        cactionMethodDeclarationEnd(env, clz, 0, x10_numberOfStatements, x10Token);
+        cactionMethodDeclarationEnd(env, clz, x10_numberOfAnnotations, x10_numberOfStatements, x10Token);
 #else
     if (SgProject::get_verbose() > 0)
         printf ("Entering  cactionMethodDeclarationEnd (method) \n");
@@ -4170,6 +4171,70 @@ JNIEXPORT void Java_x10rose_visit_JNI_cactionAttachTypeParameterToMethodDecl (JN
 
     if (SgProject::get_verbose() > 0)
         printf("Leaving cactionAttachTypeParameterToMethodDecl\n");
+}
+
+JNIEXPORT void Java_x10rose_visit_JNI_cactionAttachAnnotationsToMethodDecl (JNIEnv *env, jclass clz, jint number_annotations, jobject x10Token)
+{
+    if (SgProject::get_verbose() > 0)
+        printf("Inside of cactionAttachAnnotationsToMethodDecl\n");
+    
+    AstSgNodeListAttribute *attribute = new AstSgNodeListAttribute();
+    for (int i = 0; i < number_annotations; ++i) {
+        SgType *type = astX10ComponentStack.popType();
+        ROSE_ASSERT(type);
+        attribute -> setNode(type, i);
+    }
+
+    SgMemberFunctionDeclaration *method_declaration = isSgMemberFunctionDeclaration(astX10ComponentStack.pop());
+    ROSE_ASSERT(method_declaration);
+    method_declaration -> setAttribute("annotations", attribute);
+
+    astX10ComponentStack.push(method_declaration); 
+
+    if (SgProject::get_verbose() > 0)
+        printf("Leaving cactionAttachAnnotationsToMethodDecl\n");
+}
+
+JNIEXPORT void Java_x10rose_visit_JNI_cactionAttachAnnotationsToLocalDecl (JNIEnv *env, jclass clz, jint number_annotations, jobject x10Token)
+{
+    if (SgProject::get_verbose() > 0)
+        printf("Inside of cactionAttachAnnotationsToLocalDecl\n");
+    
+    AstSgNodeListAttribute *attribute = new AstSgNodeListAttribute();
+    for (int i = 0; i < number_annotations; ++i) {
+        SgType *type = astX10ComponentStack.popType();
+        ROSE_ASSERT(type);
+        attribute -> setNode(type, i);
+    }
+    SgVariableDeclaration *variable_declaration = isSgVariableDeclaration(astX10ComponentStack.pop());
+    ROSE_ASSERT(variable_declaration);
+    variable_declaration -> setAttribute("annotations", attribute);
+
+    astX10ComponentStack.push(variable_declaration); 
+
+    if (SgProject::get_verbose() > 0)
+        printf("Leaving cactionAttachAnnotationsToLocalDecl\n");
+}
+
+JNIEXPORT void Java_x10rose_visit_JNI_cactionAttachAnnotationsToNewExp (JNIEnv *env, jclass clz, jint number_annotations, jobject x10Token)
+{
+    if (SgProject::get_verbose() > 0)
+        printf("Inside of cactionAttachAnnotationsToNewExp \n");
+    
+    AstSgNodeListAttribute *attribute = new AstSgNodeListAttribute();
+    for (int i = 0; i < number_annotations; ++i) {
+        SgType *type = astX10ComponentStack.popType();
+        ROSE_ASSERT(type);
+        attribute -> setNode(type, i);
+    }
+    SgNewExp *newExp = isSgNewExp(astX10ComponentStack.pop());
+    ROSE_ASSERT(newExp);
+    newExp -> setAttribute("annotations", attribute);
+
+    astX10ComponentStack.push(newExp); 
+
+    if (SgProject::get_verbose() > 0)
+        printf("Leaving cactionAttachAnnotationsToNewExp \n");
 }
 
 JNIEXPORT void Java_x10rose_visit_JNI_cactionAttachTypeParameterToMethodCall (JNIEnv *env, jclass clz, jstring x10_type_param_name, jobject x10Token)

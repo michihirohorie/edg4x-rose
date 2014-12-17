@@ -269,7 +269,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionMethodDeclarationHeader
  * Signature: (IILX10Token;)V
  */
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionMethodDeclarationEnd
-#if 0
+#if 1
   (JNIEnv *, jclass, jint, jint, jobject);
 #else
   (JNIEnv *, jclass, jint, jobject); 
@@ -1635,6 +1635,27 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAttachTypeParameterToType
  */
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAttachTypeParameterToMethodDecl
         (JNIEnv *, jclass, jstring, jobject);
+
+/*
+ * Class:     x10rose_visit_JNI
+ * Method:    cactionAttachAnnotationsToMethodDecl
+ */
+JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAttachAnnotationsToMethodDecl
+        (JNIEnv *, jclass, jint, jobject);
+
+/*
+ * Class:     x10rose_visit_JNI
+ * Method:    cactionAttachAnnotationsToLocalDecl
+ */
+JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAttachAnnotationsToLocalDecl
+        (JNIEnv *, jclass, jint, jobject);
+
+/*
+ * Class:     x10rose_visit_JNI
+ * Method:    cactionAttachAnnotationsToNewExp
+ */
+JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionAttachAnnotationsToNewExp
+        (JNIEnv *, jclass, jint, jobject);
 
 /*
  * Class:     x10rose_visit_JNI
