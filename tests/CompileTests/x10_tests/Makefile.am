@@ -120,7 +120,12 @@ TESTCODES = \
     EqualOp1.x10 \ 
     EqualOp2.x10 \
     Minus0.x10 \
-    Minus1.x10 
+    Minus1.x10 \
+    NotEqual0.x10 \
+    NotEqual1.x10 \
+    Annotation0.x10 \
+    Annotation1.x10 \
+    Annotation2.x10 
 #    KMeans.x10
 
 # Warning: Use -rose:output to unparse file in build tree, rather
