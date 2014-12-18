@@ -3643,14 +3643,25 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionSingleNameReference(JNIEnv 
 #endif
 }
 
+//JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionSuperReference(JNIEnv *env, jclass clz, jstring x10_package_name, jstring x10_type_name, jobject x10Token) 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionSuperReference(JNIEnv *env, jclass clz, jobject x10Token) 
 { 
 #if 0
     cactionSuperReference(env, clz, x10Token);
 #else
+#if 0
+    SgName package_name = convertJavaStringToCxxString(env, (jstring)env->NewGlobalRef(x10_package_name));
+    SgName type_name = convertJavaStringToCxxString(env, (jstring)env->NewGlobalRef(x10_type_name));
+
+    SgType *type = lookupTypeByName(package_name, type_name, 0 /* not an array - number of dimensions is 0 */);
+    SgClassDeclaration *class_declaration = (SgClassDeclaration *) type -> getAssociatedDeclaration() -> get_definingDeclaration();
+    ROSE_ASSERT(class_declaration);
+    SgClassDefinition *class_definition = class_declaration ->get_definition();
+    ROSE_ASSERT(class_definition);
+#else
     SgClassDefinition *class_definition = getCurrentTypeDefinition();
     ROSE_ASSERT(class_definition -> get_declaration() && (! class_definition -> attributeExists("namespace")));
-
+#endif
     vector<SgBaseClass *> &inheritances = class_definition -> get_inheritances();
     if (inheritances.size() == 0 || inheritances[0] -> get_base_class() -> get_explicit_interface()) { // no super class specified?
         class_definition = ::ObjectClassDefinition; // ... then Object is the super class.
@@ -3661,7 +3672,11 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionSuperReference(JNIEnv *env,
         class_definition = super_declaration -> get_definition(); // get the super class definition
     }
 
+#if 0
+    SgClassSymbol *class_symbol = isSgClassSymbol(class_declaration -> search_for_symbol_from_symbol_table());
+#else
     SgClassSymbol *class_symbol = isSgClassSymbol(class_definition -> get_declaration() -> search_for_symbol_from_symbol_table());
+#endif
     ROSE_ASSERT(class_symbol != NULL);
 
     SgSuperExp *superExp = SageBuilder::buildSuperExp(class_symbol);
@@ -3691,7 +3706,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionSynchronizedStatementEnd(JN
         cactionSynchronizedStatementEnd(env, clz, x10Token);
 }
 
-JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionThisReference(JNIEnv *env, jclass clz, jobject x10Token) 
+JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionThisReference(JNIEnv *env, jclass clz, jstring x10_package_name,  jstring x10_type_name, jobject x10Token) 
 { 
 #if 0
         cactionThisReference(env, clz, x10Token);
@@ -3703,10 +3718,18 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionThisReference(JNIEnv *env, 
 #endif
     ROSE_ASSERT(! class_definition -> attributeExists("namespace"));
 
-//    string className = class_definition -> get_declaration() -> get_name();
+    SgName package_name = convertJavaStringToCxxString(env, (jstring)env->NewGlobalRef(x10_package_name));
+    SgName type_name = convertJavaStringToCxxString(env, (jstring)env->NewGlobalRef(x10_type_name));
+
+    SgType *type = lookupTypeByName(package_name, type_name, 0 /* not an array - number of dimensions is 0 */);
+    SgClassDeclaration *class_declaration = (SgClassDeclaration *) type -> getAssociatedDeclaration() -> get_definingDeclaration();
+    ROSE_ASSERT(class_declaration);
+
+    // string className = class_definition -> get_declaration() -> get_name();
     // printf ("Current class for ThisReference is: %s \n", className.c_str());
 
-    SgClassSymbol *class_symbol = isSgClassSymbol(class_definition -> get_declaration() -> search_for_symbol_from_symbol_table());
+//    SgClassSymbol *class_symbol = isSgClassSymbol(class_definition -> get_declaration() -> search_for_symbol_from_symbol_table());
+    SgClassSymbol *class_symbol = isSgClassSymbol(class_declaration -> search_for_symbol_from_symbol_table());
     ROSE_ASSERT(class_symbol != NULL);
 
     SgThisExp *thisExp = SageBuilder::buildThisExp(class_symbol);

@@ -750,6 +750,11 @@ void Unparse_X10::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info) {
                         unparseExpression(func_call->get_args()->get_expressions()[0], info);
                         curprint(".MIN_VALUE");
                 } 
+                else if (funcName.compare(0, ((string)"x10_lang_Int_parse").length(), "x10_lang_Int_parse") == 0) {
+                        curprint("Int.parse(");
+                        unparseExpression(func_call->get_args()->get_expressions()[0], info);
+                        curprint(")");
+                }
                 else if (funcName.compare(0, ((string)"x10_lang_Long_parse").length(), "x10_lang_Long_parse") == 0) {
                         curprint("Long.parse(");
                         unparseExpression(func_call->get_args()->get_expressions()[0], info);
@@ -885,11 +890,17 @@ Unparse_X10::unparseExprCond(SgExpression* expr, SgUnparse_Info& info)
      SgConditionalExp* expr_cond = isSgConditionalExp(expr);
      ROSE_ASSERT(expr_cond != NULL);
 
+     // MH-20141217
+     curprint("(");
+
      unparseExpression(expr_cond->get_conditional_exp(), info);
      curprint(" ? ");
      unparseExpression(expr_cond->get_true_exp(), info);
      curprint(" : ");
      unparseExpression(expr_cond->get_false_exp(), info);
+
+     // MH-20141217
+     curprint(")");
    }
 
 void
@@ -1150,6 +1161,12 @@ Unparse_X10::unparseThisNode(SgExpression* expr, SgUnparse_Info& info)
      ROSE_ASSERT(this_node != NULL);
 
   // printf ("In Unparse_ExprStmt::unparseThisNode: unp->opt.get_this_opt() = %s \n", (unp->opt.get_this_opt()) ? "true" : "false");
+  // MH-20141217
+     SgClassSymbol *class_symbol = this_node -> get_class_symbol(); 
+     SgClassDeclaration *class_declaration = (SgClassDeclaration *) class_symbol -> get_declaration() -> get_definingDeclaration();
+     string className = class_declaration -> get_name();
+     curprint(className);
+     curprint(".");
 
      if (unp->opt.get_this_opt()) // Checks options to determine whether to print "this"  
         {
@@ -1162,8 +1179,17 @@ Unparse_X10::unparseSuperNode(SgExpression* expr, SgUnparse_Info& info) {
     SgSuperExp* super_node = isSgSuperExp(expr);
 
     ROSE_ASSERT(super_node != NULL);
+
+#if 0
+  // MH-20141217
+    SgClassSymbol *class_symbol = super_node -> get_class_symbol(); 
+    SgClassDeclaration *class_declaration = (SgClassDeclaration *) class_symbol -> get_declaration() -> get_definingDeclaration();
+    string className = class_declaration -> get_name();
+    curprint(className);
+    curprint(".");
+#endif
+
     curprint ("super"); 
-curprint("<=|");
 }
 
 void

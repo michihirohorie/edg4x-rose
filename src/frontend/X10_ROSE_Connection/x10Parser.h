@@ -1135,7 +1135,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionSynchronizedStatementEnd
  * Signature: (LX10Token;)V
  */
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionThisReference
-  (JNIEnv *, jclass, jobject);
+  (JNIEnv *, jclass, jstring, jstring, jobject);
 
 /*
  * Class:     x10rose_visit_JNI
