@@ -36,6 +36,8 @@ TESTCODES = \
     For6.x10 \
     For7.x10 \
     For8.x10 \
+    For9.x10 \
+    For10.x10 \
     For0_p.x10 \
     For1_p.x10 \
     For2_p.x10 \
@@ -116,6 +118,7 @@ TESTCODES = \
     Constructor3.x10 \
     AssignOp0.x10 \
     ThisReference0.x10 \
+    ThisReference1.x10 \
     EqualOp0.x10 \
     EqualOp1.x10 \ 
     EqualOp2.x10 \
@@ -125,7 +128,11 @@ TESTCODES = \
     NotEqual1.x10 \
     Annotation0.x10 \
     Annotation1.x10 \
-    Annotation2.x10 
+    Annotation2.x10 \
+    HelloWorld.x10 \
+    ArraySum.x10 \
+    Helper0.x10 \
+    NQueensPar.x10 
 #    KMeans.x10
 
 # Warning: Use -rose:output to unparse file in build tree, rather
