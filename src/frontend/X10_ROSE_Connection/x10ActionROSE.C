@@ -769,6 +769,11 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBuildMethodSupportEnd(JNIEn
     // There is no reason to distinguish between defining and non-defining declarations in Java...
     //
     SgMemberFunctionDeclaration *method_declaration = buildDefiningMemberFunction(name, class_definition, number_of_arguments, env, method_location, args_location);
+    SgSymbol *sym =  method_declaration -> search_for_symbol_from_symbol_table();
+    ROSE_ASSERT(sym);
+    SgMemberFunctionSymbol *function_symbol = isSgMemberFunctionSymbol(sym);
+    ROSE_ASSERT(function_symbol);
+    function_symbol -> set_declaration(method_declaration);
     setX10SourcePosition(method_declaration, env, method_location);
     ROSE_ASSERT(method_declaration != NULL);
 
@@ -2009,7 +2014,6 @@ cout.flush();
     // MH-20141023 : confirm that the definition is always null
     SgFunctionDeclaration *decl = function_symbol->get_declaration();
     SgFunctionDefinition *defin = decl->get_definition();
-    cout << "33Get decl=" << decl << ", defin="<< defin << endl;
 
         if (!function_symbol) {
                 SgVariableSymbol *variable_symbol = lookupVariableByName(env, function_name);
