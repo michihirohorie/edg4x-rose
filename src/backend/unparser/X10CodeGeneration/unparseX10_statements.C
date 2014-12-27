@@ -1614,20 +1614,48 @@ Unparse_X10::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info) {
 #endif
 //    unparseDeclarationModifier(vardecl_stmt->get_declarationModifier(), info);
         SgDeclarationModifier& mod = vardecl_stmt->get_declarationModifier();
+    SgInitializedNamePtrList& names = vardecl_stmt -> get_variables();
+//    SgInitializedNamePtrList::iterator name_it;
+//    for (name_it = names.begin(); name_it != names.end(); name_it++) {
+    SgInitializedName *init_name = *names.begin();
+
     unparseStorageModifier(mod.get_storageModifier(), info);
-    unparseAccessModifier(mod.get_accessModifier(), info);
-    if (mod.isJavaAbstract()) curprint("abstract ");
-    if (mod.isFinal()) curprint("val ");
-    else curprint("var ");
-    unparseTypeModifier(mod.get_typeModifier(), info);
-    foreach (SgInitializedName* init_name, vardecl_stmt->get_variables()) {
-        // MH-20141125 : Skips a type declaration when a modifier is "val" and no initializer exists
-        if (mod.isFinal() && init_name->get_initializer() != NULL) {
+
+    // MH-20141125 : Skips a type declaration when a modifier is "val" and no initializer exists
+    if (mod.isFinal() && init_name->get_initializer() != NULL) {
+        unparseAccessModifier(mod.get_accessModifier(), info);
+        if (mod.isJavaAbstract()) curprint("abstract ");
+        if (mod.isFinal()) curprint("val ");
+        else curprint("var ");
+        unparseTypeModifier(mod.get_typeModifier(), info);
+        unparseName(init_name -> get_name(), info);
+        curprint(" = ");
+        unparseExpression(init_name->get_initializer(), info);
+    }
+    else {
+        // MH-20141222
+        string init_name_str = init_name->get_name();
+        /* 
+         * "_nom_" is defined in SageInterface::normalizeForLoopInitDeclaration(SgForStatement* loop)
+         * "_lu_fringe_" is defined in SageInterface::loopUnrolling(SgForStatement* target_loop, size_t unrolling_factor)
+         */
+        if (init_name_str.find("_nom_", 0) != string::npos) {
+            if (mod.isFinal()) curprint("val ");
+            else curprint("var ");
+            unparseTypeModifier(mod.get_typeModifier(), info);
+            unparseInitializedName(init_name, info);
+        } else if (init_name_str.find("_lu_fringe_", 0) != string::npos) {
+            curprint("val ");
+            unparseTypeModifier(mod.get_typeModifier(), info);
             unparseName(init_name -> get_name(), info);
             curprint(" = ");
             unparseExpression(init_name->get_initializer(), info);
-        }
-        else {
+        } else {
+            unparseAccessModifier(mod.get_accessModifier(), info);
+            if (mod.isJavaAbstract()) curprint("abstract ");
+            if (mod.isFinal()) curprint("val ");
+            else curprint("var ");
+            unparseTypeModifier(mod.get_typeModifier(), info);
             unparseInitializedName(init_name, info);
         }
     }
