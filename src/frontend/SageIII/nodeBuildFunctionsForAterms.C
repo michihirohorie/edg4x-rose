@@ -14071,7 +14071,7 @@ SgTemplateTypedefDeclaration* SgTemplateTypedefDeclaration::build_node_from_nonl
    }
 
 // DQ (12/11/2014): Added these which were missing as a result of new C++11 support.
-SgFinishStmt* SgFinishStmt::build_node_from_nonlist_children(Sg_File_Info*, SgStatement*)
+SgFinishStmt* SgFinishStmt::build_node_from_nonlist_children(Sg_File_Info*, SgStatement*, bool)
    {
 #if 0
   // debugging information!
@@ -14162,7 +14162,7 @@ SgLambdaExp* SgLambdaExp::build_node_from_nonlist_children(Sg_File_Info*, SgLamb
    }
 
 // DQ (12/11/2014): Added these which were missing as a result of new C++11 support.
-SgAsyncStmt* SgAsyncStmt::build_node_from_nonlist_children(Sg_File_Info*, SgStatement*)
+SgAsyncStmt* SgAsyncStmt::build_node_from_nonlist_children(Sg_File_Info*, SgStatement*, bool)
    {
 #if 0
   // debugging information!
