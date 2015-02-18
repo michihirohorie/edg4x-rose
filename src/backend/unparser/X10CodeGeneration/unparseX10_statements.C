@@ -1544,6 +1544,7 @@ Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
         bool existArg = false;
         SgClassDeclaration *classdecl_stmt = mfuncdecl_stmt->get_associatedClassDeclaration();
         SgClassDefinition *classdef_stmt = classdecl_stmt->get_definition();
+
         if (isConstructor && classdef_stmt -> attributeExists("properties")) {
             SgInitializedNamePtrList& names = mfuncdecl_stmt->get_args();
             SgInitializedNamePtrList::iterator name_it;
@@ -1565,11 +1566,17 @@ Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             }
         }       
 #if 1
+#if 0
         if (isConstructor && !classdef_stmt -> attributeExists("properties")) { 
             unparseBasicBlockStmtWithoutBrace(function_definition -> get_body(), info);
         }
-        else if (!existArg)
+        else if (!existArg) {
+#else
+        if (!existArg) {
+#endif
+cout << "0218-D" << endl;
             unparseBasicBlockStmt(function_definition -> get_body(), info);
+        }
 #else
         if (!existArg)
 #endif
