@@ -1626,11 +1626,22 @@ Unparse_X10::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info) {
 //    for (name_it = names.begin(); name_it != names.end(); name_it++) {
     SgInitializedName *init_name = *names.begin();
 
-    unparseStorageModifier(mod.get_storageModifier(), info);
+    /* Only if a vlue of SgVariableDecl is a field, then it's parent is SgClassDefinition.
+     */
+    if (isSgClassDefinition(vardecl_stmt->get_parent())) {
+  cout << "hogehoge1" << endl;
+        unparseStorageModifier(mod.get_storageModifier(), info);
+    }
 
     // MH-20141125 : Skips a type declaration when a modifier is "val" and no initializer exists
     if (mod.isFinal() && init_name->get_initializer() != NULL) {
-        unparseAccessModifier(mod.get_accessModifier(), info);
+        /* Only if a vlue of SgVariableDecl is a field, then it's parent is SgClassDefinition.
+         */
+        if (isSgClassDefinition(vardecl_stmt->get_parent())) {
+  cout << "hogehoge2" << endl;
+            unparseAccessModifier(mod.get_accessModifier(), info);
+        }
+
         if (mod.isJavaAbstract()) curprint("abstract ");
         if (mod.isFinal()) curprint("val ");
         else curprint("var ");
@@ -1658,7 +1669,10 @@ Unparse_X10::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info) {
             curprint(" = ");
             unparseExpression(init_name->get_initializer(), info);
         } else {
-            unparseAccessModifier(mod.get_accessModifier(), info);
+            /* Only if a vlue of SgVariableDecl is a field, then it's parent is SgClassDefinition.
+             */
+            if (isSgClassDefinition(vardecl_stmt->get_parent())) 
+                unparseAccessModifier(mod.get_accessModifier(), info);
             if (mod.isJavaAbstract()) curprint("abstract ");
             if (mod.isFinal()) curprint("val ");
             else curprint("var ");
