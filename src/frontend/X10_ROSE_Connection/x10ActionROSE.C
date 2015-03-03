@@ -201,10 +201,10 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionClearSourceFilename(JNIEnv 
         cactionClearSourceFilename(env, xxx);
 }
 
-JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionInsertClassStart(JNIEnv *env, jclass xxx, jstring x10_string, jboolean is_interface, jboolean is_enum, jboolean is_anonymous, jobject x10Token) 
+JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionInsertClassStart(JNIEnv *env, jclass xxx, jstring x10_string, jboolean is_interface, jboolean is_enum, jboolean is_anonymous, jboolean is_struct, jobject x10Token) 
 { 
 #if 1
-    cactionInsertClassStart(env, xxx, x10_string, is_interface, is_enum, is_anonymous, x10Token);
+    cactionInsertClassStart(env, xxx, x10_string, is_interface, is_enum, is_anonymous, is_struct, x10Token);
 #else
     SgName name = convertJavaStringToCxxString(env, x10_string);
 

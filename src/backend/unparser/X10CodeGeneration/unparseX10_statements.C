@@ -1492,15 +1492,23 @@ Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
         else {
 //             unparseType(mfuncdecl_stmt -> get_type() -> get_return_type(), info);
             if (mfuncdecl_stmt -> get_type() -> get_return_type() -> get_mangled().getString() != "void") {
-                curprint(": ");
 //              unparseType(mfuncdecl_stmt -> get_type() -> get_return_type(), info);
                 string exp = mfuncdecl_stmt -> get_type() -> get_return_type()-> get_mangled().getString() ;
+                // MH-20150303
+                if (exp == "L2R") {
+                   // This can happen when empty struct is parsed in X10.
+                   // do nothing. treat as void type.
+                }
+                else {
+                   curprint(": ");
+                
                 if (exp.length() > 2 && exp.at(0) == ':' && exp.at(1) == ':') {
                     exp = exp.substr(2);
                     replaceString(exp, "::", ".");
                 }
 //                  unparseType(mfuncdecl_stmt -> get_type() -> get_return_type(), info);
                 curprint(exp);
+                }
             }
             // MH-20141205
             SgType *type = mfuncdecl_stmt -> get_type() -> get_return_type(); 
@@ -1629,7 +1637,6 @@ Unparse_X10::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info) {
     /* Only if a vlue of SgVariableDecl is a field, then it's parent is SgClassDefinition.
      */
     if (isSgClassDefinition(vardecl_stmt->get_parent())) {
-  cout << "hogehoge1" << endl;
         unparseStorageModifier(mod.get_storageModifier(), info);
     }
 
@@ -1638,7 +1645,6 @@ Unparse_X10::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info) {
         /* Only if a vlue of SgVariableDecl is a field, then it's parent is SgClassDefinition.
          */
         if (isSgClassDefinition(vardecl_stmt->get_parent())) {
-  cout << "hogehoge2" << endl;
             unparseAccessModifier(mod.get_accessModifier(), info);
         }
 
@@ -1648,6 +1654,7 @@ Unparse_X10::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info) {
         unparseTypeModifier(mod.get_typeModifier(), info);
         unparseName(init_name -> get_name(), info);
         curprint(" = ");
+cout << "unparseExpr: " << init_name->get_initializer()->class_name() << endl;
         unparseExpression(init_name->get_initializer(), info);
     }
     else {
@@ -1669,7 +1676,7 @@ Unparse_X10::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info) {
             curprint(" = ");
             unparseExpression(init_name->get_initializer(), info);
         } else {
-            /* Only if a vlue of SgVariableDecl is a field, then it's parent is SgClassDefinition.
+            /* Only if a value of SgVariableDecl is a field, then it's parent is SgClassDefinition.
              */
             if (isSgClassDefinition(vardecl_stmt->get_parent())) 
                 unparseAccessModifier(mod.get_accessModifier(), info);
@@ -1774,13 +1781,20 @@ cout.flush();
 
      unparseDeclarationModifier(classdecl_stmt -> get_declarationModifier(), info);
 
-     curprint(classdecl_stmt -> get_explicit_enum()
+    bool isStruct = false;
+    if (classdecl_stmt -> get_class_type() == SgClassDeclaration::e_struct) {
+        isStruct = true; 
+        curprint("struct ");
+    }
+    else 
+        curprint(classdecl_stmt -> get_explicit_enum()
                        ? "enum "
                        : classdecl_stmt -> get_explicit_annotation_interface()
                                   ? "@interface "
                                   : classdecl_stmt -> get_explicit_interface()
                                              ? "interface "
                                              : "class ");
+
 
 // MH-20141014
 cout << "Class decl=" << classdecl_stmt -> get_name().str() << ", " << classdecl_stmt -> get_qualified_name().str() << endl;
@@ -1894,15 +1908,19 @@ cout << "Class decl=" << classdecl_stmt -> get_name().str() << ", " << classdecl
          }
 */
 
-         ROSE_ASSERT(class_def -> attributeExists("extension_type_names"));
-         AstRegExAttribute *extension_attribute = (AstRegExAttribute *) class_def -> getAttribute("extension_type_names");
-         // MH-20141014
-         // Note that expression includes the term "extends"
-         string exp = extension_attribute -> expression;
-         replaceString(exp, " ::", " ");
-         replaceString(exp, "::", ".");
-         curprint(exp);
-//         curprint(extension_attribute -> expression);
+         if (!isStruct) {
+             ROSE_ASSERT(class_def -> attributeExists("extension_type_names"));
+             AstRegExAttribute *extension_attribute = (AstRegExAttribute *) class_def -> getAttribute("extension_type_names");
+
+            /* MH-20141014:
+             * Note that expression includes the term "extends" and "implements" !!
+             */
+             string exp = extension_attribute -> expression;
+             replaceString(exp, " ::", " ");
+             replaceString(exp, "::", ".");
+             curprint(exp);
+  //         curprint(extension_attribute -> expression);
+         }
      }
 
      if (classdecl_stmt -> get_explicit_enum()) { // An enumeration?
@@ -1977,6 +1995,9 @@ Unparse_X10::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info& info) {
   ROSE_ASSERT(while_stmt != NULL);
 
   SgExprStatement* cond_stmt = isSgExprStatement(while_stmt->get_condition());
+  // MH-20150302
+  if (cond_stmt) {
+  ROSE_ASSERT(cond_stmt);
   ROSE_ASSERT(cond_stmt != NULL && "Expecting an SgExprStatement in member SgWhileStmt::p_condition.");
   SgExpression* cond = cond_stmt->get_expression();
   ROSE_ASSERT(cond != NULL);
@@ -1984,6 +2005,10 @@ Unparse_X10::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info& info) {
   curprint("while (");
   unparseExpression(cond, info);
   curprint(")");
+  }
+  else {
+  curprint("while()");
+  }
 
   if(while_stmt->get_body()) {
       curprint(" ");

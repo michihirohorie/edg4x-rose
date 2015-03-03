@@ -1252,11 +1252,11 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionClearSourceFilename
 /*
  * Class:     x10rose_visit_JNI
  * Method:    cactionInsertClassStart
- * Signature: (Ljava/lang/String;ZZZLX10Token;)V
+ * Signature: (Ljava/lang/String;ZZZZLX10Token;)V
  */
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionInsertClassStart
 #if 1
-  (JNIEnv *, jclass, jstring, jboolean, jboolean, jboolean, jobject);
+  (JNIEnv *, jclass, jstring, jboolean, jboolean, jboolean, jboolean, jobject);
 #else
   (JNIEnv *, jclass, jstring, jobject);
 #endif

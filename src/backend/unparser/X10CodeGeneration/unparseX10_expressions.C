@@ -294,10 +294,9 @@ Unparse_X10::unparseUnaryOperator(SgExpression* expr, const char* op, SgUnparse_
 #if 0
      curprint ( "\n /* Inside of unparseUnaryOperator(" + expr->sage_class_name() + "," + op <+ ",SgUnparse_Info) */ \n");
 #endif
+
      unparseUnaryExpr(expr, newinfo);
 
-  //
-  // Now set the "this" option back to its original state
   //
      if( !orig_this_opt )
           unp->opt.set_this_opt(false);
@@ -1588,7 +1587,9 @@ void Unparse_X10::unparseUnaryExpr(SgExpression *expr, SgUnparse_Info &info) {
         curprint(info.get_operator_name());
     }
 
+    curprint("(");
     unparseExpression(unary_op->get_operand(), info);
+    curprint(")");
 
     if (unary_op->get_mode() == SgUnaryOp::postfix) { // a postfix unary operator?
         curprint (info.get_operator_name()); 

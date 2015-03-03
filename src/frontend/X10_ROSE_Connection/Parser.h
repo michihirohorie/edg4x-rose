@@ -1079,10 +1079,10 @@ JNIEXPORT void JNICALL cactionClearSourceFilename
 
 /*
  * Method:    cactionInsertClassStart
- * Signature: (Ljava/lang/String;ZZZLX10Token;)V
+ * Signature: (Ljava/lang/String;ZZZZLX10Token;)V
  */
 JNIEXPORT void JNICALL cactionInsertClassStart
-  (JNIEnv *, jclass, jstring, jboolean, jboolean, jboolean, jobject);
+  (JNIEnv *, jclass, jstring, jboolean, jboolean, jboolean, jboolean, jobject);
 
 /*
  * Method:    cactionInsertClassEnd

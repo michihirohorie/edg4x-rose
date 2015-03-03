@@ -116,7 +116,7 @@ JNIEXPORT void JNICALL cactionClearSourceFilename(JNIEnv *env, jclass xxx) {
 /**
  *
  */
-JNIEXPORT void JNICALL cactionInsertClassStart(JNIEnv *env, jclass xxx, jstring x10_string, jboolean is_interface, jboolean is_enum, jboolean is_anonymous, jobject x10Token) {
+JNIEXPORT void JNICALL cactionInsertClassStart(JNIEnv *env, jclass xxx, jstring x10_string, jboolean is_interface, jboolean is_enum, jboolean is_anonymous, jboolean is_struct, jobject x10Token) {
     SgName name = convertJavaStringToCxxString(env, x10_string);
 
     if (SgProject::get_verbose() > 0)
@@ -165,6 +165,9 @@ cout << "1201-8 Adding class " << class_definition -> get_qualified_name().getSt
     AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) class_declaration -> getAttribute("type_space");
     ROSE_ASSERT(attribute);
     attribute -> setNode(type_space);
+
+    if (is_struct)
+        class_declaration->set_class_type(SgClassDeclaration::e_struct);
 
     astX10ScopeStack.push(class_definition); // to contain the class members...
 
