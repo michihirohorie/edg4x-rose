@@ -126,6 +126,9 @@ TESTCODES = \
     Minus1.x10 \
     NotEqual0.x10 \
     NotEqual1.x10 \
+    Struct0.x10 \
+    Struct1.x10 \
+    Struct2.x10 \
     Annotation0.x10 \
     Annotation1.x10 \
     Annotation2.x10 \
