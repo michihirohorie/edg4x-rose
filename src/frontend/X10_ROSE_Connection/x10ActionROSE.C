@@ -4378,3 +4378,95 @@ JNIEXPORT void Java_x10rose_visit_JNI_cactionTupleEnd (JNIEnv *env, jclass clz, 
     if (SgProject::get_verbose() > 0)
         printf("Leaving cactionTupleEnd\n");
 }
+
+
+JNIEXPORT void Java_x10rose_visit_JNI_cactionClosure(JNIEnv *env, jclass clz, jobject x10Token)
+{
+    if (SgProject::get_verbose() > 0)
+        printf("Inside of cactionClosure\n");
+
+    // do nothing
+    
+    if (SgProject::get_verbose() > 0)
+        printf("Leaving cactionClosure\n");
+
+}
+
+JNIEXPORT void Java_x10rose_visit_JNI_cactionClosureEnd(JNIEnv *env, jclass clz, jstring caller_class_name, jobject x10Token)
+{
+    if (SgProject::get_verbose() > 0)
+        printf("Inside of cactionClosureEnd\n");
+
+    SgClassDefinition *class_definition = isSgClassDefinition(astX10ComponentStack.pop());
+    ROSE_ASSERT(class_definition);
+    SgClassDeclaration *class_declaration = class_definition -> get_declaration();
+    ROSE_ASSERT(class_declaration);
+
+    SgDeclarationStatementPtrList &members = class_definition -> get_members();
+    // checks whether closure class has just one method
+    ROSE_ASSERT(members.size() == 1);
+    SgFunctionDeclaration *func_declaration = isSgFunctionDeclaration(members.front());
+
+    SgLambdaCaptureList* lambda_captureList = SageBuilder::buildLambdaCaptureList();
+    SgLambdaExp *lambda_exp = SageBuilder::buildLambdaExp(lambda_captureList, class_declaration, func_declaration);
+
+    setX10SourcePosition(lambda_exp, env, x10Token);
+
+    astX10ComponentStack.push(class_definition); 
+    astX10ComponentStack.push(lambda_exp); 
+
+    /* Push the same lambda expression also into the caller's astX10ComponentStack 
+     * to represent where the lambda expression is defined.
+     */
+    Java_x10rose_visit_JNI_cactionSetCurrentClassName(env, clz, caller_class_name);
+    astX10ComponentStack.push(lambda_exp); 
+    
+    if (SgProject::get_verbose() > 0)
+        printf("Leaving cactionClosureEnd\n");
+}
+
+
+
+JNIEXPORT void Java_x10rose_visit_JNI_cactionClosureCall(JNIEnv *env, jclass clz, jobject x10Token)
+{
+    if (SgProject::get_verbose() > 0)
+        printf("Inside of cactionClosureCall\n");
+
+    // do nothing
+
+    if (SgProject::get_verbose() > 0)
+        printf("Leaving cactionClosureCall\n");
+}
+
+
+JNIEXPORT void Java_x10rose_visit_JNI_cactionClosureCallEnd(JNIEnv *env, jclass clz, jint number_of_arguments, jobject x10Token)
+{
+    if (SgProject::get_verbose() > 0)
+        printf("Inside of cactionClosureCallEnd\n");
+
+    SgExpression *name = isSgExpression(astX10ComponentStack.pop());
+    ROSE_ASSERT(name);
+
+    SgExprListExp *arguments = SageBuilder::buildExprListExp();
+    for (int i = 0; i < number_of_arguments; i++) { // reverse the arguments' order
+        SgExpression *expr = astX10ComponentStack.popExpression();
+        arguments -> prepend_expression(expr);
+    }
+
+   /* As of March 11, 2015, SageBuilder::buildLambdaRefExp() internally invokes buildDefiningFunction() like:
+    * ...  buildDefiningFunctionDeclaration("__rose__lambda__",return_type,params,scope,NULL,false,NULL,NULL) ...
+    * However, the 7th argument with NULL value introduces false assertion. 
+    * Thus, currently I directly instantiate a SgLambdaRefExp object as follows. This object is a dummy one with
+    * arguments.
+    */
+    SgLambdaRefExp *lambda_ref = new SgLambdaRefExp((SgFunctionDeclaration *)NULL);
+    lambda_ref -> setAttribute("args", new AstSgNodeAttribute(arguments));
+    lambda_ref -> setAttribute("name", new AstSgNodeAttribute(name));
+    astX10ComponentStack.push(lambda_ref);
+
+    setX10SourcePosition(lambda_ref, env, x10Token);
+
+    if (SgProject::get_verbose() > 0)
+        printf("Leaving cactionClosureCallEnd\n");
+}
+

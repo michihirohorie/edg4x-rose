@@ -94,6 +94,8 @@ void Unparse_X10::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
         case V_SgAtExp:                { unparseAtExpression(expr, info); break; }
         case V_SgFinishExp:            { unparseFinishExpression(expr, info); break; }
         case V_SgTupleExp:             { unparseTupleExpression(expr, info); break; } 
+        case V_SgLambdaExp:            { unparseLambdaExpression(expr, info); break; } 
+        case V_SgLambdaRefExp:         { unparseLambdaRefExpression(expr, info); break; } 
 
         default: {
 
@@ -1764,6 +1766,176 @@ Unparse_X10::unparseTupleExpression(SgExpression *expr, SgUnparse_Info& info) {
     unparseExprListExp(tuple, info);
     curprint_indented("] ", info);
 }
+
+void
+Unparse_X10::unparseLambdaExpression(SgExpression *expr, SgUnparse_Info& info) {
+    SgLambdaExp *lambdaExp = isSgLambdaExp(expr);
+
+// In X10, no need for the lambda capture
+#if 0
+     curprint(" [");
+
+     if (lambdaExp->get_capture_default() == true)
+        {
+          curprint("=,");
+        }
+
+     if (lambdaExp->get_default_is_by_reference() == true)
+        {
+          curprint("&,");
+        }
+
+     ROSE_ASSERT(lambdaExp->get_lambda_capture_list() != NULL);
+     size_t bound = lambdaExp->get_lambda_capture_list()->get_capture_list().size();
+     for (size_t i = 0; i < bound; i++)
+        {
+          SgLambdaCapture* lambdaCapture = lambdaExp->get_lambda_capture_list()->get_capture_list()[i];
+          ROSE_ASSERT(lambdaCapture != NULL);
+
+          if (lambdaCapture->get_capture_variable() != NULL)
+             {
+               if (lambdaCapture->get_capture_by_reference() == true)
+                  {
+                    curprint("&");
+                  }
+
+               unp->u_exprStmt->unparseExpression(lambdaCapture->get_capture_variable(),info);
+             }
+
+          if (i < bound-1)
+             {
+               curprint(",");
+             }
+        }
+     curprint("] ");
+#endif
+
+     SgFunctionDeclaration* lambdaFunction =  lambdaExp->get_lambda_function();
+     ROSE_ASSERT(lambdaFunction != NULL);
+     ROSE_ASSERT(lambdaFunction->get_firstNondefiningDeclaration() != NULL);
+     ROSE_ASSERT(lambdaFunction->get_definingDeclaration() != NULL);
+
+#if 1
+     curprint("(");
+
+     SgMemberFunctionDeclaration *mfuncdecl_stmt = isSgMemberFunctionDeclaration(lambdaFunction);
+     ROSE_ASSERT(mfuncdecl_stmt);
+     SgInitializedNamePtrList& names = mfuncdecl_stmt->get_args();
+     SgInitializedNamePtrList::iterator name_it;
+     for (name_it = names.begin(); name_it != names.end(); name_it++) {
+         if (name_it != names.begin()) {
+             curprint(", ");
+         }
+
+         // MH-20141030 : handles argument modifier before calling unparseInitializedName
+         if (! (*name_it) -> attributeExists("final")) {
+            curprint("var ");
+         }
+         unparseInitializedName(*name_it, info);
+     }
+
+     AstRegExAttribute *exception_attribute = (AstRegExAttribute *) mfuncdecl_stmt -> getAttribute("exception");
+//     if (mfuncdecl_stmt -> get_declarationModifier().isJavaAbstract() || mfuncdecl_stmt -> get_functionModifier().isJavaNative()) {
+
+     curprint(")");
+ 
+#else
+     if (lambdaExp->get_has_parameter_decl() == true)
+        {
+       // Output the function parameters
+          curprint("(");
+          unparseFunctionArgs(lambdaFunction,info);
+          curprint(")");
+        }
+
+     if (lambdaExp->get_is_mutable() == true)
+        {
+          curprint(" mutable ");
+        }
+
+#if 0
+     if (lambdaFunction->get_is_mutable() == true)
+        {
+          curprint(" throw() ");
+        }
+#else
+#if 0
+     printf ("Lambda function throw keyword not yet supported! \n");
+#endif
+#endif
+#endif
+
+    curprint(" => ");
+
+     if (lambdaExp->get_explicit_return_type() == true)
+        {
+          curprint(" -> ");
+          ROSE_ASSERT(lambdaFunction != NULL);
+          ROSE_ASSERT(lambdaFunction->get_type() != NULL);
+          SgType* returnType = lambdaFunction->get_type()->get_return_type();
+          ROSE_ASSERT(returnType != NULL);
+          unp->u_type->unparseType(returnType,info);
+        }
+
+
+
+  // Use a new SgUnparse_Info object to support supression of the SgThisExp where compiler generated.
+  // This is required because the function is internally a member function but can't explicitly refer
+  // to a "this" expression.
+     SgUnparse_Info ninfo(info);
+     ninfo.set_supressImplicitThisOperator();
+
+
+  // Output the function definition
+     ROSE_ASSERT(lambdaFunction->get_definition() != NULL);
+     unparseStatement(lambdaFunction->get_definition()->get_body(), ninfo);
+
+
+}
+
+
+void
+Unparse_X10::unparseLambdaRefExpression(SgExpression* exp, SgUnparse_Info& info)
+{
+    SgLambdaRefExp *lambda_ref = isSgLambdaRefExp(exp);
+    AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) lambda_ref->getAttribute("name");
+    if (attribute) {
+        SgExpression *name = isSgExpression(attribute -> getNode());
+        ROSE_ASSERT(name);
+        unparseExpression(name, info);
+    }
+    attribute = (AstSgNodeAttribute *) lambda_ref->getAttribute("args");
+    if (attribute) {
+        SgExprListExp *args = isSgExprListExp(attribute -> getNode());
+        ROSE_ASSERT(args);
+        SgExpressionPtrList &list = args->get_expressions();
+        curprint("(");
+        for (size_t index = 0; index < list.size(); ++index) {
+            if (index > 0)
+                curprint ( ", ");
+            unparseExpression(list[index], info);
+        }
+        curprint(")");
+    }
+
+#if 0
+    unparseStatement( lambda->get_functionDeclaration()->get_parameterList(), info );
+    curprint( ": " );
+    SgStatement* lambda_body = lambda->get_body();
+    if (isSgBasicBlock(lambda_body)) {
+        lambda_body = isSgBasicBlock(lambda_body)->get_statements().front();
+    }
+    SgExpression* lambda_expr = isSgExpression(lambda_body);
+    if (lambda_expr != NULL) {
+        unparseExpression( lambda_expr, info );
+    } else {
+        cout << "Python lambda bodies must contain one SgExpression. (found " <<
+            lambda_body->class_name() << " instead)" << endl;
+        ROSE_ASSERT(!"lambda body missing SgExpression");
+    }
+#endif
+}
+
 
 void
 Unparse_X10::unparseHereExpression(SgExpression *expr, SgUnparse_Info& info) {

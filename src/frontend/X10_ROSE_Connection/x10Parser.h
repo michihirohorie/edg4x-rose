@@ -1704,6 +1704,38 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionTuple
  */
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionTupleEnd
         (JNIEnv *, jclass, jint, jobject);
+
+/*
+ * Class:     x10rose_visit_JNI
+ * Method:    cactionClosure
+ */
+JNIEXPORT void Java_x10rose_visit_JNI_cactionClosure
+        (JNIEnv *, jclass, jobject);
+
+/*
+ * Class:     x10rose_visit_JNI
+ * Method:    cactionClosureEnd
+ */
+JNIEXPORT void Java_x10rose_visit_JNI_cactionClosureEnd
+        (JNIEnv *, jclass, jstring, jobject);
+
+/*
+ * Class:     x10rose_visit_JNI
+ * Method:    cactionClosureCall
+ * Signature: (LX10Token;)V
+ */
+JNIEXPORT void Java_x10rose_visit_JNI_cactionClosureCall
+        (JNIEnv *, jclass, jobject);
+
+/*
+ * Class:     x10rose_visit_JNI
+ * Method:    cactionClosureCallEnd
+ * Signature: (LX10Token;)V
+ */
+JNIEXPORT void Java_x10rose_visit_JNI_cactionClosureCallEnd
+        (JNIEnv *, jclass, jint, jobject);
+
+
 }
 #ifdef __cplusplus
 #endif

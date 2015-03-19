@@ -2429,6 +2429,87 @@ Unparse_X10::unparseEnumBody(SgClassDefinition *class_definition, SgUnparse_Info
     curprint_indented("}", info);
 }
 
+void
+Unparse_X10::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUnparse_Info& info)
+   {
+     ROSE_ASSERT (funcdecl_stmt != NULL);
+
+#if 0
+     printf ("unparseFunctionArgs(): funcdecl_stmt->get_args().size() = %zu \n",funcdecl_stmt->get_args().size());
+     curprint("\n/* unparseFunctionArgs(): funcdecl_stmt->get_args().size() = " + StringUtility::numberToString((int)(funcdecl_stmt->get_args().size())) + " */ \n");
+#endif
+
+  // DQ (1/18/2014): This is a better implementation than setting the source position info on the function
+  // parameters.  See test2014_35.c for an example that requires this solution using a new data member.
+     if (funcdecl_stmt->get_prototypeIsWithoutParameters() == true )
+        {
+#if 0
+          printf ("In unparseFunctionArgs(): Detected prototypeIsWithoutParameters == true (funcdecl_stmt = %p) \n",funcdecl_stmt);
+#endif
+          return;
+        }
+
+#if 0
+  // DQ (1/17/2014): Adding support in C to output function prototypes without function parameters.
+     bool functionParametersMarkedToBeOutput = false;
+     SgInitializedNamePtrList::iterator temp_p = funcdecl_stmt->get_args().begin();
+     while ( temp_p != funcdecl_stmt->get_args().end() )
+        {
+       // If any are marked with valid source position then functionParametersMarkedToBeOutput will be true after the loop.
+          if (functionParametersMarkedToBeOutput == false && (*temp_p)->get_file_info()->isCompilerGenerated() == true)
+             {
+               functionParametersMarkedToBeOutput = false;
+             }
+            else
+             {
+               functionParametersMarkedToBeOutput = true;
+             }
+#if 0
+          (*temp_p)->get_file_info()->display("unparseFunctionArgs(): SgInitializedName: debug");
+#endif
+          temp_p++;
+        }
+
+     bool outputFunctionParameters = functionParametersMarkedToBeOutput;
+#else
+     bool outputFunctionParameters = true;
+#endif
+
+     SgInitializedNamePtrList::iterator p = funcdecl_stmt->get_args().begin();
+     while ( p != funcdecl_stmt->get_args().end() )
+        {
+        // Liao 11/9/2010,
+        // Skip duplicated unparsing of the attached information for C function arguments declared in old style.
+        // They usually should be unparsed when unparsing the arguments which are outside of the parameter list
+        // are outside of the parameter list
+        // See example code: tests/CompileTests/C_tests/test2010_10.c
+          if (funcdecl_stmt->get_oldStyleDefinition() == false)
+             {
+               unparseAttachedPreprocessingInfo(*p, info, PreprocessingInfo::before);
+             }
+
+       // DQ (1/17/2014): Adding support in C to output function prototypes without function parameters.
+       // unparseFunctionParameterDeclaration (funcdecl_stmt,*p,false,info);
+       // if (outputFunctionParameters == true)
+          if ( (outputFunctionParameters == true) || (funcdecl_stmt->get_oldStyleDefinition() == true) )
+             {
+//               unparseFunctionParameterDeclaration (funcdecl_stmt,*p,false,info);
+                // MH-20150306 : assert false currently. shuld be fixed.
+                 ROSE_ASSERT(false);
+             }
+
+       // Move to the next argument
+          p++;
+
+       // Check if this is the last argument (output a "," separator if not)
+          if (p != funcdecl_stmt->get_args().end())
+             {
+               curprint(",");
+             }
+        }
+   }
+
+
 
 void 
 Unparse_X10::unparseTypeParameters(SgTemplateParameterList *type_list, SgUnparse_Info& info) {
