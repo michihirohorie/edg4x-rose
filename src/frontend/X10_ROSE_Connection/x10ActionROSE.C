@@ -668,25 +668,15 @@ cout << "bar01" << endl;
     // Identify Arguments with var arguments.
     //
     if (is_var_args) {
-cout << "bar02" << endl;
         SgPointerType *array_type = isSgPointerType(argument_type);
-cout << "bar03" << endl;
         ROSE_ASSERT(array_type);
-cout << "bar04" << endl;
         SgType *element_type = array_type -> get_base_type();
-cout << "bar05" << endl;
 
         initialized_name -> setAttribute("var_args", new AstSgNodeAttribute(element_type));
-cout << "bar06" << endl;
         initialized_name -> setAttribute("type", new AstRegExAttribute(getTypeName(element_type) + "..."));
-cout << "bar07" << endl;
     } 
     else {
-cout << "bar08" << endl;
-cout << "bar088:" << argument_type << endl;
-cout << "bar0888:" << getTypeName(argument_type) << endl;
         initialized_name -> setAttribute("type", new AstRegExAttribute(getTypeName(argument_type)));
-cout << "bar09" << endl;
     }
 
 // TODO: Remove this !!!
@@ -694,14 +684,12 @@ cout << "bar09" << endl;
 //    method_definition -> insert_symbol(argument_name, new SgVariableSymbol(initialized_name));
 
     astX10ComponentStack.push(initialized_name);
-cout << "bar03" << endl;
 
 // TODO: Remove this!
 cout << "Pushed " << initialized_name->get_name() << ", " << initialized_name -> class_name() <</* ", " << initialized_name->search_for_symbol_from_symbol_table() <<*/ endl; cout.flush();
 
     if (SgProject::get_verbose() > 0)
         printf ("Exiting Build argument support\n");
-cout << "bar04" << endl;
 
 #endif
 }
@@ -845,6 +833,14 @@ printf("*Class definition:%p, member size=%d\n", class_definition, declarations.
     printf("method_declaration->get_startOfConstruct()=%p\n", method_declaration->get_startOfConstruct());
 #endif
 
+   // MH-20150409 : Class declaration sometimes has "SgTypeVoid" object as member function of that class.
+   // This should be fixed.
+    if (astX10ComponentStack.size() > 0 && isSgTypeVoid(astX10ComponentStack.top())) { 
+        astX10ComponentStack.pop();
+    }
+/*
+*/
+
     astX10ComponentStack.push(method_declaration);
 
 //MH-20140312
@@ -870,6 +866,34 @@ printf("*Class definition:%p, member size=%d\n", class_definition, declarations.
 
 #endif
 }
+
+
+JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBuildClosureMethodSupportEnd(JNIEnv *env, jclass xxx,
+                                                                    jstring x10_string,
+                                                                    jint method_index,
+                                                                    jboolean x10_is_constructor,
+                                                                    jboolean x10_is_abstract,
+                                                                    jboolean x10_is_native,
+                                                                    jint x10_number_of_type_parameters,
+                                                                    jint x10_number_of_env_arguments,
+                                                                    jint x10_number_of_arguments,
+                                                                    jboolean x10_is_user_defined,
+                                                                    jobject method_location,
+                                                                    jobject args_location) 
+{
+    Java_x10rose_visit_JNI_cactionBuildMethodSupportEnd(env, xxx, x10_string, method_index, x10_is_constructor, x10_is_abstract, x10_is_native, x10_number_of_type_parameters, x10_number_of_env_arguments, x10_is_user_defined, method_location, args_location);
+    int number_of_arguments = x10_number_of_arguments;
+    int number_of_env_arguments = x10_number_of_env_arguments;
+
+    if (number_of_env_arguments == 0)
+        return;
+
+    SgMemberFunctionDeclaration *method_declaration = isSgMemberFunctionDeclaration(astX10ComponentStack.pop());
+    method_declaration -> setAttribute("num_of_arguments", new AstIntAttribute(number_of_arguments));
+    cout << "0417 input num_of_arguments="<< number_of_arguments << endl;
+    astX10ComponentStack.push(method_declaration);
+}
+
 
 JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionUpdateMethodSupportEnd(JNIEnv *env, jclass xxx,                                                                      jstring x10_string,
                                                                      jint method_index,
@@ -1692,7 +1716,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionTypeReference(JNIEnv *env, 
     cout << "package=" << package_name << ", type=" << type_name;
     printCompStack(5);
     SgType *type = lookupTypeByName(package_name, type_name, 0 /* not an array - number of dimensions is 0 */);
-        cout << "currentTypeName=" << currentTypeName << endl;
+    cout << "0416 currentTypeName=" << currentTypeName << endl;
     printStack();
     cout << "package=" << package_name << ", type=" << type_name;
     printCompStack(6);
@@ -3587,6 +3611,8 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionReturnStatementEnd(JNIEnv *
     if (SgProject::get_verbose() > 2)
         printf ("Inside of cactionReturnStatementEnd() \n");
 
+    cout << "0416 yz currenTypeName=" << currentTypeName << endl;
+
     // Build the Return Statement
     SgExpression *expression = (has_expression ? astX10ComponentStack.popExpression() : NULL);
     SgReturnStmt *returnStatement = SageBuilder::buildReturnStmt_nfi(expression);
@@ -3828,6 +3854,8 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionSetCurrentClassNameWithCopy
 {
     scopeMap[currentTypeName] = astX10ScopeStack;
     componentMap[currentTypeName] = astX10ComponentStack;
+
+cout << "0416 currentTypeName=" << currentTypeName << endl;
      
     SgName type = convertJavaStringToCxxString(env, (jstring)env->NewGlobalRef(type_name));
     currentTypeName = type.str();
@@ -4406,6 +4434,11 @@ JNIEXPORT void Java_x10rose_visit_JNI_cactionClosureEnd(JNIEnv *env, jclass clz,
     // checks whether closure class has just one method
     ROSE_ASSERT(members.size() == 1);
     SgFunctionDeclaration *func_declaration = isSgFunctionDeclaration(members.front());
+
+    AstIntAttribute *attr = (AstIntAttribute*) func_declaration->getAttribute("num_of_arguments");
+    if (attr) {
+        cout << "0417 ClosureEnd: value=" << attr->getValue() << endl;
+    }
 
     SgLambdaCaptureList* lambda_captureList = SageBuilder::buildLambdaCaptureList();
     SgLambdaExp *lambda_exp = SageBuilder::buildLambdaExp(lambda_captureList, class_declaration, func_declaration);

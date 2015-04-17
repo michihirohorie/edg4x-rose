@@ -1423,6 +1423,14 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBuildMethodSupportEnd
 
 /*
  * Class:     x10rose_visit_JNI
+ * Method:    cactionBuildClosureMethodSupportEnd
+ * Signature: (Ljava/lang/String;IIZZZIIZLX10Token;LX10Token;)V
+ */
+JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBuildClosureMethodSupportEnd
+  (JNIEnv *, jclass, jstring, jint, jboolean, jboolean, jboolean, jint, jint, jint, jboolean, jobject, jobject);
+
+/*
+ * Class:     x10rose_visit_JNI
  * Method:    cactionUpdateMethodSupportEnd
  * Signature: (Ljava/lang/String;IZILX10Token;LX10Token;)V
  */

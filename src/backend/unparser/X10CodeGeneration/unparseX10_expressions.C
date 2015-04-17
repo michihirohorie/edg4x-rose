@@ -735,7 +735,6 @@ void Unparse_X10::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info) {
                 AstRegExAttribute *attribute = (AstRegExAttribute *) func_call->getAttribute("prefix");
                 string class_name("::X10RoseUtility");
                 string expr = attribute->expression;
-                cout << "CLASS=" << expr << endl;
                 if (expr.compare(0, class_name.length(), class_name) == 0) {
                         isConnectionUtil = 1;
                 }
@@ -748,8 +747,7 @@ void Unparse_X10::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info) {
                         curprint(".size");
                 }
                 else if (funcName == "x10_lang_Int_MIN_VALUE") {
-                        unparseExpression(func_call->get_args()->get_expressions()[0], info);
-                        curprint(".MIN_VALUE");
+                        curprint("Int.MIN_VALUE");
                 } 
                 else if (funcName.compare(0, ((string)"x10_lang_Int_parse").length(), "x10_lang_Int_parse") == 0) {
                         curprint("Int.parse(");
@@ -1822,7 +1820,14 @@ Unparse_X10::unparseLambdaExpression(SgExpression *expr, SgUnparse_Info& info) {
      ROSE_ASSERT(mfuncdecl_stmt);
      SgInitializedNamePtrList& names = mfuncdecl_stmt->get_args();
      SgInitializedNamePtrList::iterator name_it;
-     for (name_it = names.begin(); name_it != names.end(); name_it++) {
+     int num_of_args = 0;
+     AstIntAttribute *args_attribute = (AstIntAttribute *) mfuncdecl_stmt->getAttribute("num_of_arguments");
+     if (args_attribute) {
+         num_of_args = args_attribute->getValue(); 
+     }
+cout << "0417 num=" << num_of_args << endl;
+     int counter = 0;
+     for (name_it = names.begin(); name_it != names.end() && counter++ < num_of_args; name_it++) {
          if (name_it != names.begin()) {
              curprint(", ");
          }
@@ -1835,7 +1840,6 @@ Unparse_X10::unparseLambdaExpression(SgExpression *expr, SgUnparse_Info& info) {
      }
 
      AstRegExAttribute *exception_attribute = (AstRegExAttribute *) mfuncdecl_stmt -> getAttribute("exception");
-//     if (mfuncdecl_stmt -> get_declarationModifier().isJavaAbstract() || mfuncdecl_stmt -> get_functionModifier().isJavaNative()) {
 
      curprint(")");
  

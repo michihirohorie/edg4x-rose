@@ -44,7 +44,7 @@ void replaceString (std::string& str, const std::string& from, const std::string
  * For debugging use
  */
 void printStack() {
-#if 0
+#if 1
     cout << "...in the stack: " << endl;
     for (std::list<SgScopeStatement*>::iterator i = astX10ScopeStack.begin(); i != astX10ScopeStack.end(); i++) {
         cout << "    "
@@ -250,7 +250,7 @@ SgMemberFunctionDeclaration *lookupMemberFunctionDeclarationInClassScope(SgClass
     method_declaration = lookupMemberFunctionDeclarationInClassScope(class_definition, function_name, types);
 // TODO: REMOVE THIS !
 if (!method_declaration){
-cout << "Could not find function " << function_name.getString() << "(";
+cout << "1 Could not find function " << function_name.getString() << "(";
 std::list<SgType*>::iterator i = types.begin();
 if (i != types.end()) {
 cout << getTypeName(*i);
@@ -1766,6 +1766,9 @@ cout << ", " << getTypeName(*i);
 }
 cout << ")"
 << endl;
+// MH-20150409
+vector<SgDeclarationStatement *> declarations = class_definition -> get_members();
+cout << "size=" << dec << declarations.size() << endl;
 cout.flush();
 /*
 */
@@ -1987,6 +1990,7 @@ SgMemberFunctionSymbol *findFunctionSymbolInClass(SgClassDefinition *class_defin
 #else
 SgMemberFunctionSymbol *findFunctionSymbolInClass(SgClassDefinition *class_definition, const SgName &function_name, list<SgType *> &formal_types, JNIEnv *env, jobject x10Visitor) {
 #endif
+cout << "0313 : findFunctionSymbolInClass()" << endl;
     ROSE_ASSERT(class_definition != NULL);
     SgMemberFunctionDeclaration *method_declaration = findMemberFunctionDeclarationInClass(class_definition, function_name, formal_types);
     if (method_declaration == NULL) {
@@ -2048,7 +2052,7 @@ SgMemberFunctionSymbol *findFunctionSymbolInClass(SgClassDefinition *class_defin
 
 // TODO: Remove this !!!
 if (!method_declaration){
-cout << "Could not find function " << function_name.getString() << "(";
+cout << "2 Could not find function " << function_name.getString() << "(";
 std::list<SgType*>::iterator i = formal_types.begin();
 if (i != formal_types.end()) {
 cout << getTypeName(*i);
@@ -2090,7 +2094,7 @@ SgMemberFunctionSymbol *findFunctionSymbolInClass(SgClassDefinition *class_defin
 // TODO: Remove this !!!
 
 if (! method_declaration){
-cout << "Could not find function " << function_name.getString() << "(";
+cout << "3 Could not find function " << function_name.getString() << "(";
 std::list<SgType*>::iterator i = formal_types.begin();
 if (i != formal_types.end()) {
 cout << getTypeName(*i);
@@ -2332,6 +2336,7 @@ SgVariableSymbol *lookupSimpleNameVariableInClass(const SgName &name, SgClassDef
     ROSE_ASSERT(class_definition);
     ROSE_ASSERT(class_definition -> get_declaration());
     SgVariableSymbol *symbol = class_definition -> lookup_variable_symbol(name);
+    cout << "0416 symbol=" << symbol << " for " << name << ", classDef=" << class_definition << ", decl=" << class_definition -> get_declaration() << ", " << class_definition->get_qualified_name() << endl;
 
     vector<SgBaseClass *> &inheritances = class_definition -> get_inheritances();
     for (int k = 0; symbol == NULL && k < (int) inheritances.size(); k++) {
@@ -2341,7 +2346,11 @@ SgVariableSymbol *lookupSimpleNameVariableInClass(const SgName &name, SgClassDef
     }
 
     if (symbol == NULL) {
+// MH-20150415 Disabled because we do not define the class Object in X10. 
+//             TODO: Instead, we may need to look up in Any.
+#if 0
         symbol = ::ObjectClassDefinition -> lookup_variable_symbol(name);
+#endif
     }
 
     return symbol;
@@ -2359,6 +2368,8 @@ SgVariableSymbol *lookupVariableByName(JNIEnv *env, const SgName &name) {
     // Note that in the case of a class, we recursively search the class as well as its
     // super class and interfaces.
     //
+
+    printStack();
     
     SgSymbol *symbol = NULL;
     for (std::list<SgScopeStatement*>::iterator i = astX10ScopeStack.begin(); (symbol == NULL || (! isSgVariableSymbol(symbol))) && i != astX10ScopeStack.end(); i++) {
@@ -2460,10 +2471,17 @@ cout.flush();
     // Note that in the case of a class, we recursively search the class as well as its
     // super class and interfaces.
     //
+#if 1
     for (std::list<SgScopeStatement*>::iterator i = astX10ScopeStack.begin(); (*i) != ::globalScope; i++) {
+#else 
+    for (std::list<SgScopeStatement*>::iterator i = astX10ScopeStack.begin(); ; i++) {
+        if (i == astX10ScopeStack.end()) 
+            break;
+#endif
         SgClassDefinition *class_definition = isSgClassDefinition(*i);
 
 // TODO: Remove this!
+/*
 cout << "Looking for type "
 << type_name
 << " in "
@@ -2471,7 +2489,6 @@ cout << "Looking for type "
     : isSgFunctionDefinition(*i) ? (isSgFunctionDefinition(*i) -> get_declaration() -> get_name().getString() + "(...)")
                                                   : (*i) -> class_name())
 << endl;
-/*
 */
         if (class_definition) {
             if (isSgJavaPackageDeclaration(class_definition -> get_parent())) { // Have we reached a package
@@ -2633,7 +2650,7 @@ SgClassSymbol *lookupTypeSymbol(SgName &type_name, const SgName &package_name = 
     // MH-20141009
     scopeMap[currentTypeName] = astX10ScopeStack;
     componentMap[currentTypeName] = astX10ComponentStack;
-        std::string formerTypeName = currentTypeName;
+    std::string formerTypeName = currentTypeName;
     currentTypeName = type_name.str();
     cout << "Former type=" << formerTypeName << ", current type=" << currentTypeName << endl;
     printStack();
@@ -2690,7 +2707,7 @@ SgClassSymbol *lookupTypeSymbol(SgName &type_name, const SgName &package_name = 
         SgNode *node = isSgClassDefinition(*i) ? isSgClassDefinition(*i)
                                  : isSgFunctionDefinition(*i) ? isSgFunctionDefinition(*i) 
                                                               : (*i);
-#if 0
+#if 1
         string node_name = isSgClassDefinition(*i) ? isSgClassDefinition(*i) -> get_qualified_name().getString()
                             : isSgFunctionDefinition(*i) ? isSgFunctionDefinition(*i) -> get_qualified_name().getString()
                                                          : (*i) -> class_name();
@@ -2729,8 +2746,10 @@ SgClassSymbol *lookupTypeSymbol(SgName &type_name, const SgName &package_name = 
         //MH-20140326
         if (class_symbol != NULL)
             break;
-        if ((*i) == ::globalScope)
-            break;
+
+// MH-20150416 comment out
+//        if ((*i) == ::globalScope)
+//            break;
     }
     // 
     // If the class_symbol still has not been found, look for it in java.lang! -> should be fixed to find x10.lang? 

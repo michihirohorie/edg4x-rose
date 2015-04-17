@@ -1171,30 +1171,18 @@ Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
         return;
     }
 
-    // MH (7/7/2014) : Added 
     string str = mfuncdecl_stmt->get_associatedClassDeclaration()->get_qualified_name().getString();
     string shorten = str.substr(2);
-    // MH-20141018
-//    str = shorten + "$$this$" + shorten;
     str = shorten + "$$this$";
     replaceString(str, "::", "$");
     int isUnparse = 1;
     string name = mfuncdecl_stmt->get_name().getString();
-/*
-    cout << "NAME=" << mfuncdecl_stmt->get_name() 
-         << ", str=" << str
-         << ", comp=" << name.compare(0, str.length(), str)
-         << ", CLASS_NAME=" << mfuncdecl_stmt->get_associatedClassDeclaration()->get_qualified_name() 
-         << ", MANGLED=" << mfuncdecl_stmt->get_associatedClassDeclaration()->get_mangled_name() << endl;
-*/
-//    if (mfuncdecl_stmt->get_name().getString() ==  str) {
     if (name.compare(0, str.length(), str) == 0) {
         curprint("\n// Comment out. Dees not support the constrainted type. \n");
         curprint("/*\n");
         isUnparse = 0;  
     }
 
-    // MH-20141216
     if (mfuncdecl_stmt -> attributeExists("annotations")) {
          AstSgNodeListAttribute *annotations_attribute = (AstSgNodeListAttribute *) mfuncdecl_stmt -> getAttribute("annotations");
          for (int i = 0; i < annotations_attribute -> size(); i++) {
@@ -1209,37 +1197,6 @@ Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
     // if constructor
     if (mfuncdecl_stmt->get_name() == mfuncdecl_stmt->get_associatedClassDeclaration()->get_name()) 
         isConstructor = 1;
-
-// MH-20141216
-#if 0
-    AstSgNodeListAttribute *annotations_attribute = (AstSgNodeListAttribute *) mfuncdecl_stmt -> getAttribute("annotations");
-    if (annotations_attribute) {
-        for (int i = 0; i < annotations_attribute -> size(); i++) {
-            SgJavaAnnotation *annotation = isSgJavaAnnotation(annotations_attribute -> getNode(i));
-            unparseExpression(annotation, info);
-            unp -> cur.insert_newline();
-            curprint_indented("", info);
-        }
-    }
-#endif
-
-//
-// TODO: REMOVE THIS
-// charles4 :  2/29/2012   I don't think this is needed!
-/*
-     //TODO should there be forward declarations or nondefining declarations?
-     if (mfuncdecl_stmt-> isForward()) {
-         //cout << "unparser: skipping forward mfuncdecl: "
-         //   << mfuncdecl_stmt->get_qualified_name().getString()
-         //   << endl;
-         return;
-     } else if (mfuncdecl_stmt->get_definition() == NULL) {
-         cout << "unparser: skipping nondefining mfuncdecl: "
-              << mfuncdecl_stmt->get_qualified_name().getString()
-              << endl;
-         return;
-     }
-*/
 
      if (mfuncdecl_stmt->get_functionModifier().isJavaInitializer()) { // If this is an initializer block, process it here and return.
          if (mfuncdecl_stmt -> get_declarationModifier().get_storageModifier().isStatic()) {
@@ -1259,93 +1216,34 @@ Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
          unparseTypeParameters(type_list, info);
      }
 
-     curprint("def");
+    curprint("def");
 
-#if 0
-     //
-     // Unparse type, unless this a constructor then unparse name
-     //
-     if (mfuncdecl_stmt -> get_specialFunctionModifier().isConstructor()) {
-         unparseName(mfuncdecl_stmt -> get_associatedClassDeclaration() -> get_name(), info);
-     }
-     else {
-// TODO: Remove this !
-/*
-         ROSE_ASSERT(mfuncdecl_stmt->get_type());
-         ROSE_ASSERT(mfuncdecl_stmt->get_type()->get_return_type());
-         unparseType(mfuncdecl_stmt->get_type()->get_return_type(), info);
-*/
-         AstRegExAttribute *attribute = (AstRegExAttribute *) mfuncdecl_stmt -> getAttribute("type");
-         if (attribute) {
-             curprint(attribute -> expression);
-         }
-         else {
-             unparseType(mfuncdecl_stmt -> get_type() -> get_return_type(), info);
-         }
-         curprint(" ");
-         unparseName(mfuncdecl_stmt->get_name(), info);
-     }
-#endif
+    bool hasTypeParameter = false;
+    curprint(" ");
+    if (isConstructor)
+        unparseName("this", info);
+    else 
+        unparseName(mfuncdecl_stmt->get_name(), info);
 
-       bool hasTypeParameter = false;
-        curprint(" ");
-        if (isConstructor)
-                    unparseName("this", info);
-        else {
-            unparseName(mfuncdecl_stmt->get_name(), info);
+    if (mfuncdecl_stmt -> attributeExists("type-parameter")) {
+        curprint("[");
+        AstRegExAttribute *type_parameter_attribute = (AstRegExAttribute *) mfuncdecl_stmt -> getAttribute("type-parameter");
+        string ret_type = mfuncdecl_stmt->get_name().str();
+        size_t found = ret_type.find(type_parameter_attribute -> expression);
+        if (found == string::npos) {
+            curprint(type_parameter_attribute -> expression);
         }
+        curprint("]");
+    }
+    curprint("(");
 
-        // MH-20141121
-        if (mfuncdecl_stmt -> attributeExists("type-parameter")) {
-            curprint("[");
-#if 1
-            AstRegExAttribute *type_parameter_attribute = (AstRegExAttribute *) mfuncdecl_stmt -> getAttribute("type-parameter");
-            string ret_type = mfuncdecl_stmt->get_name().str();
-            size_t found = ret_type.find(type_parameter_attribute -> expression);
-            if (found == string::npos) {
-                curprint(type_parameter_attribute -> expression);
-            }
-#else 
-            AstSgNodeListAttribute *type_parameter_attribute = (AstSgNodeListAttribute *) mfuncdecl_stmt -> getAttribute("type-parameter");
-            if (type_parameter_attribute != NULL) {
-                std::vector<SgNode *> &type_list = type_parameter_attribute -> getNodeList();
-                for (int k = 0; k < type_list.size(); k++) {
-                    if (0 < k)
-                       curprint(", "); 
-                    SgName *type_parameter_name = (SgName *) type_list[k];
-                    curprint(type_parameter_name -> getString());
-                }
-            }
-#endif
-            curprint("]");
-        }
-        curprint("(");
-
-
-#if 0 /* There's no need to call unparseStatement() to unparse the parameter list because that's done in the next
-       * paragraph. [RPM 2012-05-23] */
-     unparseStatement(mfuncdecl_stmt->get_parameterList(), info);
-#endif
-
-     SgInitializedNamePtrList& names = mfuncdecl_stmt->get_args();
-     SgInitializedNamePtrList::iterator name_it;
-     for (name_it = names.begin(); name_it != names.end(); name_it++) {
+    SgInitializedNamePtrList& names = mfuncdecl_stmt->get_args();
+    SgInitializedNamePtrList::iterator name_it;
+    for (name_it = names.begin(); name_it != names.end(); name_it++) {
          if (name_it != names.begin()) {
              curprint(", ");
          }
 
-// MH-20141216
-#if 0
-         AstSgNodeListAttribute *annotations_attribute = (AstSgNodeListAttribute *) (*name_it) -> getAttribute("annotations");
-         if (annotations_attribute) {
-             for (int i = 0; i < annotations_attribute -> size(); i++) {
-                 SgJavaAnnotation *annotation = isSgJavaAnnotation(annotations_attribute -> getNode(i));
-                 unparseExpression(annotation, info);
-                 curprint(" ");
-             }
-         }
-#endif
-                
          // MH-20141030 : handles argument modifier before calling unparseInitializedName
          if (! (*name_it) -> attributeExists("final")) {
             curprint("var ");
@@ -1358,17 +1256,11 @@ Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
          curprint(")");
 
 
-#if 1
-     //
-     // Unparse type, unless this a constructor then unparse name
-     //
-//     if (mfuncdecl_stmt -> get_specialFunctionModifier().isConstructor()) {
     if (isConstructor) {
-//         unparseName(mfuncdecl_stmt -> get_associatedClassDeclaration() -> get_name(), info);
         curprint(": ");
         unparseName(mfuncdecl_stmt->get_associatedClassDeclaration()->get_name(), info);
 
-        // MH-20141121 : Add type parameter
+        // type parameter
         SgClassDeclaration *classdecl_stmt = mfuncdecl_stmt->get_associatedClassDeclaration();
         if (classdecl_stmt -> attributeExists("type_parameters")) {
             AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) classdecl_stmt -> getAttribute("type_parameters");
@@ -1378,12 +1270,6 @@ Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
         }
     }
      else {
-// TODO: Remove this !
-/*
-         ROSE_ASSERT(mfuncdecl_stmt->get_type());
-         ROSE_ASSERT(mfuncdecl_stmt->get_type()->get_return_type());
-         unparseType(mfuncdecl_stmt->get_type()->get_return_type(), info);
-*/
          AstRegExAttribute *attribute = (AstRegExAttribute *) mfuncdecl_stmt -> getAttribute("type");
          if (attribute) {
              if (attribute -> expression != "void") {
@@ -1404,13 +1290,11 @@ Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                       exp = exp.substr(2);
                       replaceString(exp, "::", ".");
                   }
-//                  unparseType(mfuncdecl_stmt -> get_type() -> get_return_type(), info);
                     curprint(exp);
               }
          }
          curprint(" ");
      }
-#endif
          curprint(exception_attribute != NULL ? (" throws " + exception_attribute -> expression).c_str() : "");
 
          AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) mfuncdecl_stmt -> getAttribute("default");
@@ -1433,16 +1317,10 @@ Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
     }
 
 #if 1
- //        curprint(": ");
-     //
-     // Unparse type, unless this a constructor then unparse name
-     //
-//     if (mfuncdecl_stmt -> get_specialFunctionModifier().isConstructor()) {
      if (isConstructor) {
-//         unparseName(mfuncdecl_stmt -> get_associatedClassDeclaration() -> get_name(), info);
          curprint(": ");
          unparseName(mfuncdecl_stmt->get_associatedClassDeclaration()->get_name(), info);
-        // MH-20141121 : Add type parameter
+        // type parameter
         SgClassDeclaration *classdecl_stmt = mfuncdecl_stmt->get_associatedClassDeclaration();
         if (classdecl_stmt -> attributeExists("type_parameters")) {
             AstSgNodeAttribute *attribute = (AstSgNodeAttribute *) classdecl_stmt -> getAttribute("type_parameters");
@@ -1452,29 +1330,12 @@ Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
         }
      }
     else {
-// TODO: Remove this !
-/*
-         ROSE_ASSERT(mfuncdecl_stmt->get_type());
-         ROSE_ASSERT(mfuncdecl_stmt->get_type()->get_return_type());
-         unparseType(mfuncdecl_stmt->get_type()->get_return_type(), info);
-*/
         AstRegExAttribute *attribute = (AstRegExAttribute *) mfuncdecl_stmt -> getAttribute("type");
         if (attribute) {
-//          curprint(attribute -> expression);
             if (attribute -> expression != "void") {
                 curprint(": ");
-#if 0
-//              curprint(attribute -> expression);
-                            string exp = attribute->expression;
-                if (exp.length() > 2 && exp.at(0) == ':' && exp.at(1) == ':') {
-                    exp = exp.substr(2);
-                    replaceString(exp, "::", ".");
-                }
-                curprint(exp);
-#endif
                 unparseType(mfuncdecl_stmt->get_type()->get_return_type(), info);
 
-                // MH-20141205
                 SgType *type = mfuncdecl_stmt -> get_type() -> get_return_type(); 
                 if (type -> attributeExists("type-parameter")) {
                     AstRegExAttribute *type_param_attribute = (AstRegExAttribute *) mfuncdecl_stmt -> getAttribute("type-parameter");
@@ -1490,11 +1351,8 @@ Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             } 
         }
         else {
-//             unparseType(mfuncdecl_stmt -> get_type() -> get_return_type(), info);
             if (mfuncdecl_stmt -> get_type() -> get_return_type() -> get_mangled().getString() != "void") {
-//              unparseType(mfuncdecl_stmt -> get_type() -> get_return_type(), info);
                 string exp = mfuncdecl_stmt -> get_type() -> get_return_type()-> get_mangled().getString() ;
-                // MH-20150303
                 if (exp == "L2R") {
                    // This can happen when empty struct is parsed in X10.
                    // do nothing. treat as void type.
@@ -1506,7 +1364,6 @@ Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                     exp = exp.substr(2);
                     replaceString(exp, "::", ".");
                 }
-//                  unparseType(mfuncdecl_stmt -> get_type() -> get_return_type(), info);
                 curprint(exp);
                 }
             }
@@ -1522,11 +1379,6 @@ Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                     curprint(typeParam);
                     curprint("]");
                 }
-#if 0
-                    curprint("[");
-                    curprint(typeParam);
-                    curprint("]");
-#endif
             }
         }
         curprint(" ");
@@ -1573,21 +1425,9 @@ Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                 curprint_indented ("}", info);
             }
         }       
-#if 1
-#if 0
-        if (isConstructor && !classdef_stmt -> attributeExists("properties")) { 
-            unparseBasicBlockStmtWithoutBrace(function_definition -> get_body(), info);
-        }
-        else if (!existArg) {
-#else
         if (!existArg) {
-#endif
-cout << "0218-D" << endl;
             unparseBasicBlockStmt(function_definition -> get_body(), info);
         }
-#else
-        if (!existArg)
-#endif
      }
         
         if (!isUnparse)
