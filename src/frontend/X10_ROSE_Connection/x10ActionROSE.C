@@ -1150,11 +1150,16 @@ printStack();
         string full_file_name = convertJavaStringToCxxString(env, x10_full_file_name);
         ROSE_ASSERT(::currentSourceFile == isSgSourceFile((*::project)[full_file_name]));
 
+#if 0
     SgName package_name = convertX10PackageNameToCxxString(env, x10_package_name);
+#else
+    SgName package_name = convertJavaStringToCxxString(env, x10_package_name);
+#endif
     ROSE_ASSERT(astX10ScopeStack.top() == ::globalScope); // There must be a scope element in the scope stack.
 
 //MH-20140502
 //////////////////////////////////////
+    cout << "0421 cactionCompilationUnitDeclaration, package_name=" << package_name << endl;
     SgJavaPackageDeclaration *package_declaration = findPackageDeclaration(package_name);
     ROSE_ASSERT(package_declaration);
     SgClassDefinition *package_definition = package_declaration -> get_definition();

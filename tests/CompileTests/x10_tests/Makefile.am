@@ -24,9 +24,12 @@ TESTCODES = \
     NestedClass1_p.x10 \
     NestedClass2_p.x10 \
     NestedClass3_p.x10 \
+    NestedClass4_p.x10 \
     StaticNestedClass0.x10 \
     StaticNestedClass1.x10 \
     StaticNestedClass2.x10 \
+    SubPackage0.x10 \
+    SubPackage1.x10 \
     For0.x10 \
     For1.x10 \
     For2.x10 \
