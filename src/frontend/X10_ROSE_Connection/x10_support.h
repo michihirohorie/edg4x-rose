@@ -72,7 +72,8 @@ class ComponentStack : private std::list<SgNode *> {
 public:
     void push(SgNode *n) {
         if (SgProject::get_verbose() > 0) {
-            std::cerr << "***ComponentStack: Pushing node " << n -> class_name() << ", " << n << std::endl; 
+            std::cerr << "***ComponentStack: Pushing node " << n -> class_name() << ", " << n << ", currentTypeName=" << currentTypeName << std::endl; 
+printCompStack(424);
             std::cerr.flush();
         }
         push_front(n);
@@ -82,7 +83,8 @@ public:
         ROSE_ASSERT(size() > 0);
         SgNode *n = front();
         if (SgProject::get_verbose() > 0) {
-            std::cerr << "***ComponentStack: Popping node " << n -> class_name() << ", " << n << std::endl;
+            std::cerr << "***ComponentStack: Popping node " << n -> class_name() << ", " << n << ", currentTypeName=" << currentTypeName << std::endl;
+printCompStack(424);
             std::cerr.flush();
         }
         pop_front();
@@ -166,7 +168,7 @@ class ScopeStack : private std::list<SgScopeStatement *> {
 public:
     void push(SgScopeStatement *n) {
         if (SgProject::get_verbose() > 0) {
-            std::cerr << "***Pushing node " << n -> class_name() << std::endl; 
+            std::cerr << "***Pushing node " << n -> class_name() << ", currentTypeName=" << currentTypeName << std::endl; 
             std::cerr.flush();
         }
         push_front(n);
@@ -176,7 +178,7 @@ public:
         ROSE_ASSERT(size() > 0);
         SgScopeStatement *n = front();
         if (SgProject::get_verbose() > 0) {
-            std::cerr << "***Popping node " << n -> class_name() << std::endl;
+            std::cerr << "***Popping node " << n -> class_name() << ", currentTypeName=" << currentTypeName << std::endl;
             std::cerr.flush();
         }
         pop_front();

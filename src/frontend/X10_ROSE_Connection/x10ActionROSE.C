@@ -805,7 +805,9 @@ printf("*Class definition:%p, member size=%d\n", class_definition, declarations.
     if (number_of_type_parameters > 0) {
         list<SgTemplateParameter *> parameter_list;
         for (int i = 0; i < number_of_type_parameters; i++) { // Reverse the content of the stack.
+cout << "0422 X3" << endl;
             SgClassDeclaration *parameter_decl = isSgClassDeclaration(astX10ComponentStack.pop());
+cout << "0422 X4" << endl;
             ROSE_ASSERT(parameter_decl);
             SgTemplateParameter *parameter = new SgTemplateParameter(parameter_decl -> get_type(), NULL);
             parameter_list.push_front(parameter);
@@ -838,8 +840,6 @@ printf("*Class definition:%p, member size=%d\n", class_definition, declarations.
     if (astX10ComponentStack.size() > 0 && isSgTypeVoid(astX10ComponentStack.top())) { 
         astX10ComponentStack.pop();
     }
-/*
-*/
 
     astX10ComponentStack.push(method_declaration);
 
@@ -1159,7 +1159,6 @@ printStack();
 
 //MH-20140502
 //////////////////////////////////////
-    cout << "0421 cactionCompilationUnitDeclaration, package_name=" << package_name << endl;
     SgJavaPackageDeclaration *package_declaration = findPackageDeclaration(package_name);
     ROSE_ASSERT(package_declaration);
     SgClassDefinition *package_definition = package_declaration -> get_definition();
@@ -2040,9 +2039,32 @@ cout.flush();
 
 #if 1
     SgMemberFunctionSymbol * function_symbol = findFunctionSymbolInClass(targetClassScope, function_name, function_parameter_types, env);
+#if 0
+    SgMemberFunctionDeclaration *method_declaration = NULL;
+    // MH-20150422
+    if (!function_symbol) {
+        cout << "0422 function symbol NULL. Need to create a dummy." << endl;
+        method_declaration = buildDefiningMemberFunction(function_name, targetClassScope, 0, env, x10Token, x10Token);
+/*
+        SgSymbol *sym =  method_declaration -> search_for_symbol_from_symbol_table();
+        ROSE_ASSERT(sym);
+        SgMemberFunctionSymbol *function_symbol = isSgMemberFunctionSymbol(sym);
+        ROSE_ASSERT(function_symbol);
+        function_symbol -> set_declaration(method_declaration);
+        setX10SourcePosition(method_declaration, env, method_location);
+        ROSE_ASSERT(method_declaration != NULL);
+*/
+    }
+    else {
+        method_declaration = function_symbol->get_declaration();
+    }
+    SgFunctionDeclaration *decl = method_declaration;
+    SgFunctionDefinition *defin = decl->get_definition();
+#else
     // MH-20141023 : confirm that the definition is always null
     SgFunctionDeclaration *decl = function_symbol->get_declaration();
     SgFunctionDefinition *defin = decl->get_definition();
+#endif
 
         if (!function_symbol) {
                 SgVariableSymbol *variable_symbol = lookupVariableByName(env, function_name);
@@ -4450,13 +4472,14 @@ JNIEXPORT void Java_x10rose_visit_JNI_cactionClosureEnd(JNIEnv *env, jclass clz,
 
     setX10SourcePosition(lambda_exp, env, x10Token);
 
-    astX10ComponentStack.push(class_definition); 
+//    astX10ComponentStack.push(class_definition); 
     astX10ComponentStack.push(lambda_exp); 
 
     /* Push the same lambda expression also into the caller's astX10ComponentStack 
      * to represent where the lambda expression is defined.
      */
     Java_x10rose_visit_JNI_cactionSetCurrentClassName(env, clz, caller_class_name);
+    ROSE_ASSERT(isSgClassDeclaration(astX10ComponentStack.pop()));
     astX10ComponentStack.push(lambda_exp); 
     
     if (SgProject::get_verbose() > 0)

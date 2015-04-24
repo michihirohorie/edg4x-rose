@@ -139,6 +139,9 @@ TESTCODES = \
     Closure4.x10 \
     Closure5.x10 \
     Closure6.x10 \
+    Closure7.x10 \
+    Closure8.x10 \
+    Closure9.x10 \
     Annotation0.x10 \
     Annotation1.x10 \
     Annotation2.x10 \

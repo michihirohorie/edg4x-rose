@@ -98,6 +98,7 @@ void Unparse_X10::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
         case V_SgLambdaRefExp:         { unparseLambdaRefExpression(expr, info); break; } 
 
         default: {
+//cout << "3 type=" << expr->variantT()<< endl;
 
             // migrate the above switch stmt to use variantT() instead on variant(). The former has much
             // more consistent names
@@ -154,6 +155,9 @@ void Unparse_X10::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
                 case V_SgMemberFunctionRefExp:  { unparseMFuncRef(expr, info); break; }
 
                 case V_SgNullExpression:        { curprint ("null"); break; }
+                // MH-20150424 : This need for processing invocation of a method having a closure as its parameter
+                case V_SgClassDeclaration:      { curprint("this"); break; }
+                case V_SgStatementExpression:   { unparseStatement(((SgStatementExpression *)expr)->get_statement(), info); break; }
 
                 default:
                      cout << "error: unparseExpression() is unimplemented for " << expr->class_name() << endl;
@@ -1423,8 +1427,8 @@ Unparse_X10::unparseBinaryOp(SgBinaryOp* op,
         if (requiresParentheses(op, info)) 
                 curprint("(");
 
-cout << "BINARY LEFT=" << op->get_lhs_operand()->get_type()->get_mangled().str() << endl;
-cout << "BINARY RIGHT=" << op->get_rhs_operand()->get_type()->get_mangled().str() << endl;
+//cout << "BINARY LEFT=" << op->get_lhs_operand()->get_type()->get_mangled().str() << endl;
+//cout << "BINARY RIGHT=" << op->get_rhs_operand()->get_type()->get_mangled().str() << endl;
         unparseExpression(op->get_lhs_operand(), info);
 
     switch (op->variantT()) {
